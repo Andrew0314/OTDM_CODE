@@ -13,51 +13,64 @@ void setup_remote(int pin){
 }
 
 
-char get_remote_input() {
+remote_output get_remote_input() {
+
+  remote_output out;
+  out.do_pod_stuff = false;
+  out.new_data = true;
   char output = '0';
+  
   if (irrecv.decode(&results)) {
     switch (results.value){
-      case 16753245:
-        output = 'p'; // power button
-        break;
-      case 16712445:
-        output = 's'; // play button
+      case 16753245: // power button
+        if (motor_running){
+            stop_motor(); // power button
+            out.dir_remote = 0;
+        }else{
+            motor_running = true;
+        }
         break;
       case 16761405:
-        output = 'f'; // fast forward button
+        out.dir_remote = 1; // fast forward button
         break;
       case 16720605:
-        output = 'b'; // rewing button
+        out.dir_remote = -1; // rewing button
         break;
       case 16748655:
-        output = 'c'; // up arrow button
+        out.openSesimy = 0; // up arrow button
+        out.do_pod_stuff = true;
         break;
       case 16769055: 
-        output = 'o';  // down arrow button
+        out.openSesimy = 1;
+        out.do_pod_stuff = true; // down arrow button
         break;
       case 16724175:
-        output = '1'; // 1 button
+        out.motor_pwm_remote = (255/4)*1; // 1 button
         break;
       case 16718055:
-        output = '2'; // 2 button
+        out.motor_pwm_remote = (255/4)*2; // 2 button
         break;
       case 16743045:
-        output = '3'; // 3 button
+        out.motor_pwm_remote = (255/4)*3; // 3 button
         break;
       case 16716015:
-        output = '4'; // 4 button
+        out.motor_pwm_remote = (255/4)*4; // 4 button
         break;
       case 16730805:
-        output = '8'; // 8 button
+        out.pod_number = 1;  // 8 button
+        out.do_pod_stuff = true;
         break;
       case 16732845: 
-        output = '9'; // 9 button 
+        out.pod_number = 2; // 9 button 
+        out.do_pod_stuff = true;
         break;
       default:
+        out.new_data = false;
         output = '0';
     }
     irrecv.resume(); // Receive the next value
   }
   delay(10);
-  return output;
-}
+  return out;
+    
+  }
