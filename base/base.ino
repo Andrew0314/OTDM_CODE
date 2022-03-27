@@ -32,13 +32,13 @@ struct msg{
 msg pod1 = {0,1};
 msg pod2 = {0,1};
 
-
+#define REMOTE_PIN 28
 
 
 void setup() {
 
   Serial.begin(115200);
-  
+  setup_remote(REMOTE_PIN);
   if (!radio.begin()) {
     Serial.println(F("radio hardware is not responding!!"));
     while (1) {} // hold in infinite loop
