@@ -34,13 +34,12 @@ void encoderA(){
   if (encoder_ticks == ticks_per_transit){
     pod1.openSesimy = 1;
     transmitData(1);
-    digitalWrite(green,LOW);
+    stop_motor();
     
   }else if (encoder_ticks == ticks_per_transit * 2){
-
     pod2.openSesimy = 1;
-     transmitData(2);
-    digitalWrite(green,LOW);
+    transmitData(2);
+    stop_motor();
     encoder_ticks = 0;      // After full loop reset encoder distance
   }
   

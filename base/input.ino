@@ -8,6 +8,9 @@ void setup_input(){
 int get_speed_value(){
   int pot_value = analogRead(pot_pin);
   int pwm = map(pot_value, 0,1023,0,255); // Map input to valid PWM
+  int R = map(pwm,0,255,255,0);
+
+  RGB_LED(R,pwm,0);
   return pwm;
 }
 
@@ -17,7 +20,7 @@ int get_direction(){
   int forward_switch = digitalRead(forward_pin);
   int reverse_switch = digitalRead(reverse_pin);
   int dir;
-  
+
   if (forward_switch && reverse_switch){  // Don't run motor
     dir = 0;
   }
