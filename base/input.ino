@@ -7,13 +7,23 @@ void setup_input(){
 
 
 // Get potentiometer speed value
-int get_speed_value(){
-  int pot_value = analogRead(pot_pin);
-  int pwm = map(pot_value, 0,1023,0,255); // Map input to valid PWM
-  int R = map(pwm,0,255,255,0);
 
+double double_map(double x, double in_min, double in_max, double out_min, double out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+void get_speed_value(){
+  if (in_slowdown){
+    return;
+  }
+  int pot_value = analogRead(pot_pin);
+  
+  speed_setpoint = double_map(pot_value, 0.0,1023.0,0.0,max_speed); // Map input to valid speed in ft/s
+
+  // HANDLE LED
+  int R = map(pot_value,0,1023,255,0);
   RGB_LED(R,pwm,0);
-  return pwm;
 }
 
 

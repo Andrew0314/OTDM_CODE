@@ -1,7 +1,12 @@
+#include <AutoPID.h>
+
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 5000;
 bool test_door_open = true;
 bool run_with_encoder = false;
+bool run_with_pid = false;
+bool run_with_pods = false;
+bool run_with_slowdown = false;
 
 // LED PINS
 int receive_led_blue = 8;
@@ -61,11 +66,28 @@ struct remote_output{
 
 // MOTOR STATUS
 bool motor_running = false;
-int pwm, dir;   // FINAL VALUES
+double pwm;   // FINAL VALUES
+int dir;
 
+// PID values
+double speed_setpoint;
+double speed_current;
+
+double motor_deadband = 60;
+double max_speed = 2; // ft/s
+double slowdown_tolerance = 3; // ft
+double slowdown_speed = .25; // ft/s
+bool in_slowdown = false;
+double kp = 1;
+double ki = 1;
+double kd = 1;
+
+int pid_timestep = 200;
+
+AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,kd);
 
 // PREVIOUS BASE READINGS
-int old_motor_pwm_base, old_dir_base; 
+double old_motor_pwm_base, old_dir_base; 
 
 
 void setup() {
@@ -75,6 +97,7 @@ void setup() {
   setup_encoder();
   setup_LED();
   setup_input();
+  setup_pid();
   all_lights();
   delay(2000);
   all_lights_off();
@@ -110,21 +133,23 @@ void loop() {
 // }
     
   // BASE CONTROL TAKES PRIORITY OVER REMOTE
-  int motor_pwm_base = get_speed_value();
+  get_speed_value();
   int cur_dir = get_direction();
   //run_motor(cur_dir,motor_pwm_base);
   // If base command changes, execute and overwrite remote
-  if (motor_pwm_base != old_motor_pwm_base){ 
-    pwm = motor_pwm_base;    
+  if (speed_setpoint != old_motor_pwm_base){ 
+    pwm = speed_setpoint;    
   }
 
   if (cur_dir != old_dir_base){
     dir = cur_dir;
   }
-  
-  old_motor_pwm_base = motor_pwm_base;
-  old_dir_base = cur_dir;
 
+  
+  old_motor_pwm_base = speed_setpoint;
+  old_dir_base = cur_dir;
+  
+  assign_motor_pwm();
   if (test_door_open){
     stop_motor();
     for (int i = 0; i < 3; i++){
@@ -135,14 +160,16 @@ void loop() {
       delay(30000);          
     }
   }else{
+    if (run_with_pods){
       // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
-  if (pod1.ready2go){// && pod2.ready2go){
-    run_motor(dir,pwm);    
-  }else{
-    stop_motor();
-  }
+      if (pod1.ready2go){// && pod2.ready2go){
+        run_motor(dir,pwm);    
+      }else{
+        stop_motor();
+      }
+    }else{
+      run_motor(dir,pwm);
+    }
   delay(200);
   }
-
-
 }

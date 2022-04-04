@@ -1,9 +1,13 @@
 
 void print_pot(){
   //Serial.print("SPEED");
-  Serial.println(get_speed_value());
+  Serial.println(speed_setpoint);
 }
 
+void print_motor_speed(){
+  Serial.println("Motor Speed: ");
+  Serial.print(speed_current);
+}
 void print_pod_status(){
   Serial.println("POD1:");
   Serial.print("Ready: ");
