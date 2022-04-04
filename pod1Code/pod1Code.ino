@@ -7,12 +7,18 @@
 // instantiate an object for the nRF24L01 transceiver
 RF24 radio(9, 10); // using pin 7 for the CE pin, and pin 8 for the CSN pin
 
+
+int L_EN = 4;
+int R_EN = 5;
+int L_PWM = 6;
+int R_PWM = 7;
+
 uint8_t receive_address[6] = "3Node";
 uint8_t send_address[6] = "4Node";
 
 int blue = 8;
 int red = 7;
-int green = 6;
+int green = 8;
 
 struct msg{
   bool openSesimy;
@@ -29,12 +35,19 @@ msg package = {0,1};
 void setup() {
 
   Serial.begin(115200);
-  
+    pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN,HIGH);
   if (!radio.begin()) {
     Serial.println(F("radio hardware is not responding!!"));
     while (1) {} // hold in infinite loop
+  }else{
+    Serial.println("RADIO GOOD");
   }
-   radio.setPALevel(RF24_PA_LOW);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN,HIGH);
+  delay(4000);
+  digitalWrite(LED_BUILTIN,LOW);
+  radio.setPALevel(RF24_PA_LOW);
    
    radio.openReadingPipe(1, receive_address); 
    radio.openWritingPipe(send_address);
@@ -57,6 +70,7 @@ void loop() {
 
   if (package.openSesimy == 1){
     openPod();
+    delay(1000);
     closePod();
   }
 
@@ -64,25 +78,28 @@ void loop() {
 }
 
 void openPod(){
-    digitalWrite(green, HIGH);
-    delay(2000);
-    digitalWrite(green, LOW);
+    digitalWrite(LED_BUILTIN, HIGH);
+    run_motor(1,255);
+    delay(10000);
+    digitalWrite(LED_BUILTIN, LOW);
     delay(200);
+    stop_motor();
 }
 
 void closePod(){
-    digitalWrite(green, HIGH);
-    delay(2000);
-    digitalWrite(green, LOW);
+    digitalWrite(LED_BUILTIN, HIGH);
+    run_motor(-1,255);
+    delay(10000);
+    digitalWrite(LED_BUILTIN, LOW);
     package.openSesimy = false;
     package.ready2go = true;
     transmitData();
+    stop_motor();
     
 }
 
 
 void recieveData(){
-    digitalWrite(red,LOW);
     uint8_t pipe;
     if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it
       //uint8_t bytes = radio.getPayloadSize(); // get the size of the payload

@@ -4,6 +4,8 @@ void setup_input(){
   pinMode(reverse_pin, INPUT_PULLUP);
 }
 
+
+
 // Get potentiometer speed value
 int get_speed_value(){
   int pot_value = analogRead(pot_pin);

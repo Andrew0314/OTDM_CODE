@@ -1,35 +1,43 @@
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 5000;
+bool test_door_open = true;
+bool run_with_encoder = false;
 
 // LED PINS
-int receive_led_blue = 7;
-int send_led_red = 5;
-int running_led_green = 6;
+int receive_led_blue = 8;
+int send_led_red = 9;
+int running_led_green = 10;
 
 // RGB PINS
-int R_pin = 35;
-int G_pin = 33;
-int B_pin = 34; 
+int R_pin = 11;
+int G_pin = 12;
+int B_pin = 13; 
 
 // IR REMOTE PIN
-const int REMOTE_PIN = 28;
+const int REMOTE_PIN = 22;
 
 // MOTOR PINS
-const int R_EN = 40;
-const int L_EN = 41;
-const int L_PWM = 45;
-const int R_PWM = 46;
+const int R_EN = 42;
+const int L_EN = 43;
+const int L_PWM = 41;
+const int R_PWM = 40;
 
 // POTENTIOMETER PIN
 #define pot_pin A0
 
 // DIRECTION SWITCH PINS
-int forward_pin = 22;
-int reverse_pin = 24;
+int forward_pin = 26;
+int reverse_pin = 28;
 
 // RF PINS
-int CE = 9;
-int CSN = 10;
+int CE = 5;
+int CSN = 4;
+
+// INTERRUPT PINS
+
+int encoderA_pin = 18;
+int encoderB_pin = 19;
+int rf_int_pin = 3;
 
 // RF MESSAGES TO PODS
 struct msg{
@@ -67,10 +75,14 @@ void setup() {
   setup_encoder();
   setup_LED();
   setup_input();
+  all_lights();
+  delay(2000);
+  all_lights_off();
 }
 
 void loop() {
   print_pod_status();
+  //print_pot();
 //  // REMOTE INPUTS
 //  remote_output remote_vals = get_remote_input();
 // 
@@ -96,11 +108,11 @@ void loop() {
 //      delay(OPEN_CLOSE_DELAY);
 //    }
 // }
-
+    
   // BASE CONTROL TAKES PRIORITY OVER REMOTE
   int motor_pwm_base = get_speed_value();
   int cur_dir = get_direction();
-  
+  //run_motor(cur_dir,motor_pwm_base);
   // If base command changes, execute and overwrite remote
   if (motor_pwm_base != old_motor_pwm_base){ 
     pwm = motor_pwm_base;    
@@ -113,11 +125,24 @@ void loop() {
   old_motor_pwm_base = motor_pwm_base;
   old_dir_base = cur_dir;
 
-  // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
-  if (pod1.ready2go && pod2.ready2go){
+  if (test_door_open){
+    stop_motor();
+    for (int i = 0; i < 3; i++){
+      pod1.openSesimy = 1;
+      transmitData(1);
+      pod2.openSesimy = 1;
+      transmitData(2);
+      delay(30000);          
+    }
+  }else{
+      // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
+  if (pod1.ready2go){// && pod2.ready2go){
     run_motor(dir,pwm);    
   }else{
     stop_motor();
   }
   delay(200);
+  }
+
+
 }

@@ -16,10 +16,10 @@ int ticks_per_transit = ticks_per_rev * rev_per_transit;
 
 
 void setup_encoder(){
-   pinMode(2,INPUT_PULLUP);
-   pinMode(3,INPUT_PULLUP);
-   attachInterrupt(digitalPinToInterrupt(2), encoderA, RISING);
-   attachInterrupt(digitalPinToInterrupt(3), encoderB, RISING);
+   pinMode(encoderA_pin,INPUT_PULLUP);
+   pinMode(encoderB_pin,INPUT_PULLUP);
+   attachInterrupt(digitalPinToInterrupt(encoderA_pin), encoderA, RISING);
+   attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
 }
 
 void encoderA(){
@@ -31,17 +31,20 @@ void encoderA(){
   }
 
   // IF AT CORRECT LOCATION TRANSMIT SIGNAL TO OPEN
-  if (encoder_ticks == ticks_per_transit){
-    pod1.openSesimy = 1;
-    transmitData(1);
-    stop_motor();
-    
-  }else if (encoder_ticks == ticks_per_transit * 2){
-    pod2.openSesimy = 1;
-    transmitData(2);
-    stop_motor();
-    encoder_ticks = 0;      // After full loop reset encoder distance
+  if (run_with_encoder){
+    if (encoder_ticks == ticks_per_transit){
+      pod1.openSesimy = 1;
+      transmitData(1);
+      stop_motor();
+      
+    }else if (encoder_ticks == ticks_per_transit * 2){
+      pod2.openSesimy = 1;
+      transmitData(2);
+      stop_motor();
+      encoder_ticks = 0;      // After full loop reset encoder distance
+    }    
   }
+
   
 }
 

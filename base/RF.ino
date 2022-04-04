@@ -9,9 +9,9 @@ uint8_t pod2_send_address[6] = "1Node";
 uint8_t pod2_receive_address[6] = "2Node";
 
 void setup_RF(){
-  if (!radio.begin()) {
+  while (!radio.begin()) {
     Serial.println(F("radio hardware is not responding!!"));
-    while (1) {} // hold in infinite loop
+   // while (1) {} // hold in infinite loop
   }
    radio.setPALevel(RF24_PA_LOW);
    radio.openReadingPipe(1, pod1_receive_address); 
@@ -20,7 +20,7 @@ void setup_RF(){
    radio.openWritingPipe(pod2_send_address);
    radio.startListening();  // put radio in TX mode
    radio.maskIRQ(1,1,0);
-   attachInterrupt(digitalPinToInterrupt(18), recieveData, FALLING);
+   attachInterrupt(digitalPinToInterrupt(rf_int_pin), recieveData, FALLING);
    digitalWrite(receive_led_blue,HIGH);
 }
 
