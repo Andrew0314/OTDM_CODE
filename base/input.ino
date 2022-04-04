@@ -4,21 +4,19 @@ void setup_input(){
   pinMode(reverse_pin, INPUT_PULLUP);
 }
 
-
-
-// Get potentiometer speed value
-
+// MODIFIED MAP DUE TO BUILTIN MAP ONLY WORKING FOR INT
 double double_map(double x, double in_min, double in_max, double out_min, double out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+// Get potentiometer speed value
 void get_speed_value(){
+  // NO POT INPUT IF POD IS IN SLOWDOWN
   if (in_slowdown){
     return;
   }
   int pot_value = analogRead(pot_pin);
-  
   speed_setpoint = double_map(pot_value, 0.0,1023.0,0.0,max_speed); // Map input to valid speed in ft/s
 
   // HANDLE LED

@@ -16,11 +16,14 @@ float rev_per_transit = feet_per_transit / distance_per_rev;
 int ticks_per_transit = ticks_per_rev * rev_per_transit;
 int ticks_per_tolerance = ticks_per_rev * (slowdown_tolerance / distance_per_rev);
 
+
+// TICKS WHERE SLOWDOWN SHOULD BEGIN
 int start_slowdown1 = ticks_per_transit - ticks_per_tolerance;
 int stop_slowdown1 = ticks_per_transit + ticks_per_tolerance;
 int start_slowdown2 = ticks_per_transit - (2*ticks_per_tolerance);
 int stop_slowdown2 = ticks_per_transit + (2*ticks_per_tolerance);
 
+// VARIABLES FOR CURRENT TRAVEL SPEED
 unsigned long last_encoder_tick = 0;
 unsigned long current_time;
 unsigned long ellapsed_time; 
@@ -31,7 +34,6 @@ void setup_encoder(){
    attachInterrupt(digitalPinToInterrupt(encoderA_pin), encoderA, RISING);
    attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
 }
-
 
 
 double calculate_motor_speed(){
@@ -46,14 +48,13 @@ double calculate_motor_speed(){
   }
 }
 
-
-
 void handle_pod_location(){
   // IF AT CORRECT LOCATION TRANSMIT SIGNAL TO OPEN
   if (!run_with_encoder){
+    in_slowdown = false;
     return;
   }
-
+  // IF AT SLOWDOWN LOCATION CHANGE SETPOINT AND DISABLE POTENTIOMETER SPEED INPUT
   if (encoder_ticks >= start_slowdown1)
   {
    speed_setpoint = slowdown_speed;

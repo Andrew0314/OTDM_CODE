@@ -104,9 +104,31 @@ void setup() {
 }
 
 void loop() {
-  print_pod_status();
+  //print_pod_status();
   //print_pot();
-//  // REMOTE INPUTS
+  
+  assign_motor_pwm();
+  if (test_door_open){
+    test_door();
+  }else{
+    if (run_with_pods){
+      // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
+      if (pod1.ready2go){// && pod2.ready2go){
+        run_motor(dir,pwm);    
+      }else{
+        stop_motor();
+      }
+    }else{
+      run_motor(dir,pwm);
+    }
+  delay(200);
+  }
+}
+
+
+void handle_inputs(){
+  // I PROPOSE NO REMOTE JUST COMPLICATES THINGS 
+  //  // REMOTE INPUTS
 //  remote_output remote_vals = get_remote_input();
 // 
 //  if (remote_vals.new_data){  // If there is new data from the remote set values
@@ -144,14 +166,12 @@ void loop() {
   if (cur_dir != old_dir_base){
     dir = cur_dir;
   }
-
-  
   old_motor_pwm_base = speed_setpoint;
   old_dir_base = cur_dir;
-  
-  assign_motor_pwm();
-  if (test_door_open){
-    stop_motor();
+}
+
+void test_door(){
+  stop_motor();
     for (int i = 0; i < 3; i++){
       pod1.openSesimy = 1;
       transmitData(1);
@@ -159,17 +179,4 @@ void loop() {
       transmitData(2);
       delay(30000);          
     }
-  }else{
-    if (run_with_pods){
-      // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
-      if (pod1.ready2go){// && pod2.ready2go){
-        run_motor(dir,pwm);    
-      }else{
-        stop_motor();
-      }
-    }else{
-      run_motor(dir,pwm);
-    }
-  delay(200);
-  }
 }
