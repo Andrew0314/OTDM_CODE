@@ -24,5 +24,5 @@ void run_motor(int dir, int pwm){
 void stop_motor(){
   motor.Stop();
   motor.Disable();
-  motor_running = false;
+  speed_setpoint = 0.0;
 }

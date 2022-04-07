@@ -1,12 +1,101 @@
 
 void print_pot(){
-  //Serial.print("SPEED");
-  Serial.println(speed_setpoint);
+  Serial.print("Potentiometer Reading: ");
+  Serial.println(analogRead(pot_pin));
+    Serial.println();
+      Serial.println();
+        Serial.println();
+          Serial.println();
 }
 
-void print_motor_speed(){
-  Serial.println("Motor Speed: ");
+
+void plot_rpm(){
   Serial.print(speed_current);
+  Serial.print(" ");
+  Serial.println(unfiltered_speed_current);
+  Serial.println();
+  Serial.println();
+  Serial.println();
+}
+void print_motor_speed(){
+  Serial.print("Motor Speed: ");
+  Serial.println(speed_current);
+  Serial.print("RPM: ");
+  Serial.println(rpm);
+  Serial.print("Motor Speed Setpoint: ");
+  Serial.println(speed_setpoint); 
+  Serial.println();
+  Serial.println();
+  Serial.println();
+}
+
+void print_pod_location(int pod_number){
+  
+  float distance_traveled = encoder_ticks * ft_per_tick; // ft
+  if (pod_number == 1){
+    Serial.println("POD 1:");
+    if (abs(distance_traveled - 0.0) <= stop_tolerance){
+      Serial.println("Loading");
+    }
+    else if (distance_traveled < feet_per_transit){
+      Serial.print(distance_traveled);
+      Serial.println(" ft moving up");
+    }
+    else if (abs(distance_traveled - feet_per_transit) <= stop_tolerance){
+      Serial.println("Unloading!");
+    }
+    else if ( distance_traveled > feet_per_transit){
+      Serial.print(distance_traveled - feet_per_transit);
+      Serial.println(" ft moving down");
+    }
+  }else   if (pod_number == 2){
+    Serial.println("POD 1:");
+    if (abs(distance_traveled - feet_per_transit) <= stop_tolerance){
+      Serial.println("Unloading");
+    }
+    else if (distance_traveled < feet_per_transit * 2){
+      Serial.print(distance_traveled);
+      Serial.println(" ft moving up");
+    }
+    else if (abs(distance_traveled - 2 * feet_per_transit) <= stop_tolerance){
+      Serial.println("Loading!");
+    }
+    else if ( distance_traveled > 2* feet_per_transit){
+      Serial.print(distance_traveled - 2*feet_per_transit);
+      Serial.println(" ft moving down");
+    }
+  }
+  Serial.print("Pod Slowdown: ");
+  Serial.println(in_slowdown);
+  
+      Serial.println();
+        Serial.println();
+                Serial.println();
+}
+
+void print_pid(){
+  Serial.print("PWM");
+  Serial.println(pwm);
+  Serial.println();
+  Serial.println();
+    Serial.println();
+}
+void print_motor_dir(){
+  Serial.print("Motor Direction: ");
+  Serial.println(dir);
+  Serial.println();
+  Serial.println();
+    Serial.println();
+}
+
+void debug_encoder(){
+  Serial.print("Encoder Ticks: ");
+  Serial.println(encoder_ticks);
+  Serial.print("Reverse Ticks: ");
+  Serial.println(reverse_ticks);
+  Serial.println();
+  Serial.println();
+    Serial.println();
 }
 void print_pod_status(){
   Serial.println("POD1:");
@@ -22,6 +111,8 @@ void print_pod_status(){
   Serial.print(pod2.openSesimy);
   Serial.println();
   Serial.println();
+    Serial.println();
+      
 }
 
 void all_lights(){

@@ -10,109 +10,178 @@ bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
 float feet_per_transit = 21.0;
-float ticks_per_rev = 600;
-float distance_per_rev = 14 * 3.1415 / 12; // feet
+float ticks_per_rev = 600; // ticks/rev
+float distance_per_rev = 14 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev;
 int ticks_per_transit = ticks_per_rev * rev_per_transit;
-int ticks_per_tolerance = ticks_per_rev * (slowdown_tolerance / distance_per_rev);
+int ticks_per_slowdown_tol = ticks_per_rev * (slowdown_tolerance / distance_per_rev);
+int ticks_per_stop_tol = ticks_per_rev * (stop_tolerance / distance_per_rev);
+float ft_per_tick = distance_per_rev / ticks_per_rev;
 
 
-// TICKS WHERE SLOWDOWN SHOULD BEGIN
-int start_slowdown1 = ticks_per_transit - ticks_per_tolerance;
-int stop_slowdown1 = ticks_per_transit + ticks_per_tolerance;
-int start_slowdown2 = ticks_per_transit - (2*ticks_per_tolerance);
-int stop_slowdown2 = ticks_per_transit + (2*ticks_per_tolerance);
+
+// TICKS WHERE SLOWDOWN AND STOP SHOULD BEGIN
+int start_slowdown1 = ticks_per_transit - ticks_per_slowdown_tol;
+int stop_slowdown1 = ticks_per_transit + ticks_per_slowdown_tol;
+int start_slowdown2 = (2*ticks_per_transit) - ticks_per_slowdown_tol;
+int stop_slowdown2 = (2*ticks_per_transit) + ticks_per_slowdown_tol;
+int stop1_ticks = ticks_per_transit - ticks_per_stop_tol;
+int stop2_ticks = (2 * ticks_per_transit) - ticks_per_stop_tol;
 
 // VARIABLES FOR CURRENT TRAVEL SPEED
-unsigned long last_encoder_tick = 0;
+unsigned long prev_time = micros();
 unsigned long current_time;
-unsigned long ellapsed_time; 
+volatile int ellapsed_encoder_ticks = 0;
+float ellapsed_time; 
+float bull_wheel_diam = 14/12; //ft
+bool load_complete = false;
 
 void setup_encoder(){
    pinMode(encoderA_pin,INPUT_PULLUP);
    pinMode(encoderB_pin,INPUT_PULLUP);
    attachInterrupt(digitalPinToInterrupt(encoderA_pin), encoderA, RISING);
-   attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
+//   attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
 }
 
-
-double calculate_motor_speed(){
-  if (last_encoder_tick == 0){
-    return 0;
-  }else{
-    current_time = millis();
-    ellapsed_time = (current_time - last_encoder_tick)  * 1000; // seconds
-    float rps = (1/ticks_per_rev) / ellapsed_time;
-    speed_current = rps * 2 * 3.1415 * 14 /12; // ft/s
-    last_encoder_tick = current_time;    
-  }
+void calculate_motor_speed(){
+    current_time = micros();
+    // THESE IF STATEMENTS ENSURE NO SHENANIGANS WITH STARTING AND STOPPING 
+    if (current_time <= prev_time){
+      speed_current = 0.0;
+      prev_time = current_time;
+      return;
+    }
+    if (ellapsed_encoder_ticks == 0){
+      speed_current = 0.0;
+      ellapsed_encoder_ticks = 0;
+      prev_time = current_time;
+      return;
+    }
+    ellapsed_time = abs(current_time - prev_time); // microseconds
+    if (ellapsed_time <= 1){
+      speed_current = 0.0;
+      ellapsed_encoder_ticks = 0;
+      prev_time = current_time;
+      return;
+    }
+    
+    float tps = ellapsed_encoder_ticks / (ellapsed_time/1000000); // Ticks per second
+    float rps = (tps/ticks_per_rev);
+    rpm = rps * 60;
+    unfiltered_speed_current = rps * 3.1415 * bull_wheel_diam; // ft/s
+    speed_current = exp_filter(unfiltered_speed_current);
+    prev_time = current_time;
+    ellapsed_encoder_ticks = 0;
 }
 
+// USE THIS DELAY IF delay DOESN't SEEM TO DELAY
+void better_delay(unsigned long delay_time){
+    unsigned long t1 = millis();
+    unsigned long t2 = millis();
+    while (abs(t2-t1) < delay_time){
+      t2 = millis();
+    }
+}
 void handle_pod_location(){
   // IF AT CORRECT LOCATION TRANSMIT SIGNAL TO OPEN
+  
   if (!run_with_encoder){
     in_slowdown = false;
     return;
   }
-  // IF AT SLOWDOWN LOCATION CHANGE SETPOINT AND DISABLE POTENTIOMETER SPEED INPUT
-  if (encoder_ticks >= start_slowdown1)
-  {
-   speed_setpoint = slowdown_speed;
-   in_slowdown = true;
-  }
-  else if (encoder_ticks == ticks_per_transit)
-  {
-    pod1.openSesimy = 1;
-    transmitData(1);
-    stop_motor();
-  }
-  else if(encoder_ticks <= stop_slowdown1)
+  
+  if (encoder_ticks >= start_slowdown1 and encoder_ticks < stop1_ticks) // ENTERING SLOWDOWN
   {
     speed_setpoint = slowdown_speed;
     in_slowdown = true;
+    motor_running = true;
   }
-  else if (encoder_ticks >= start_slowdown2)
+  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING
+  {
+    stop_motor();
+    in_slowdown = false;  
+    motor_running = false;
+    pod1.openSesimy = 1;
+    transmitData(1);
+    load_complete = true; // ONLY RUNS THIS ONCE
+    if (!run_with_pods){
+      better_delay(5000);
+    }
+    run_motor(dir,pwm);   // STARTS MOTOR AGAIN
+  }
+  else if((encoder_ticks <= stop_slowdown1 and encoder_ticks > ticks_per_transit and motor_running) or load_complete) // EXITING SLOWDOWN
+  {
+    if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){ // THIS MAKES SURE ABOVE CASE CAN"T BE CALLED AGAIN AND RESETS LOAD COMPLETE FOR NEXT ROUND
+      load_complete = false;      
+    }
+    speed_setpoint = slowdown_speed;
+    in_slowdown = true;
+    motor_running = true;
+  }
+  else if (encoder_ticks >= start_slowdown2 and encoder_ticks < stop2_ticks) // ENTERING SLOWDOWN
   {
      speed_setpoint = slowdown_speed;
      in_slowdown = true;
+     motor_running = true;
   }
-  else if (encoder_ticks == ticks_per_transit * 2)
+  else if (abs(encoder_ticks - (ticks_per_transit * 2)) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING
   {
+    stop_motor();
+    in_slowdown = false;
+    motor_running = false; 
     pod2.openSesimy = 1;
     transmitData(2);
-    stop_motor();
-    encoder_ticks = 0;      // After full loop reset encoder distance
+    load_complete = true;
+    if (!run_with_pods){
+      better_delay(5000);
+    }
+   run_motor(dir,pwm);  
   }
-  else if(encoder_ticks <= stop_slowdown2)
+  else if((encoder_ticks <= stop_slowdown2 and encoder_ticks > ticks_per_transit*2 and motor_running) or load_complete) // EXITING SLOWDOWN
   {
     speed_setpoint = slowdown_speed;
+    if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){
+      load_complete = false;      
+    }
     in_slowdown = true;    
-  }
-  else
-  {
-    in_slowdown = false;
+    motor_running = true;
   }
 }
 
 void encoderA(){
   // INCREMENT CW ENCODER COUNTS
-  calculate_motor_speed();
-  if (!digitalRead(3) && digitalRead(2)){
+
+  if (digitalRead(encoderB_pin)){
     encoder_direction = true;
     encoder_ticks ++;
+    ellapsed_encoder_ticks++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-  }
-  handle_pod_location();
 
-}
-
-void encoderB(){
-    // INCREMENT REVERSE ENCODER COUNT
-    if (digitalRead(3) && !digitalRead(2)){
-      encoder_direction = false;
-      reverse_ticks++;
-      if (reverse_ticks == max_reverse_ticks){
-        reverse_flag = true;
-      }
+  }else{
+    reverse_ticks++;
+    encoder_direction = false;
+    if (reverse_ticks == max_reverse_ticks){
+      reverse_flag = true;
     }
+  }
 }
+
+//void encoderB(){
+//
+//      // INCREMENT CW ENCODER COUNTS
+//  calculate_motor_speed();
+//
+//  if (!digitalRead(encoderA_pin)){
+//    encoder_direction = true;
+//    encoder_ticks ++;
+//    reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
+//  }else{
+//    reverse_ticks++;
+//    encoder_direction = false;
+//    if (reverse_ticks == max_reverse_ticks){
+//      reverse_flag = true;
+//    }
+//  }
+//  handle_pod_location();
+//
+//}

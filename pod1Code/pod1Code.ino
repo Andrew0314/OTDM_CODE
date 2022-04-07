@@ -37,11 +37,9 @@ void setup() {
   Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN,HIGH);
-  if (!radio.begin()) {
+  while (!radio.begin()) {
     Serial.println(F("radio hardware is not responding!!"));
-    while (1) {} // hold in infinite loop
-  }else{
-    Serial.println("RADIO GOOD");
+   // while (1) {} // hold in infinite loop
   }
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN,HIGH);
@@ -70,7 +68,6 @@ void loop() {
 
   if (package.openSesimy == 1){
     openPod();
-    delay(1000);
     closePod();
   }
 

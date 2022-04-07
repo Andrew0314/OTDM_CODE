@@ -12,8 +12,15 @@ double double_map(double x, double in_min, double in_max, double out_min, double
 
 // Get potentiometer speed value
 void get_speed_value(){
+  
   // NO POT INPUT IF POD IS IN SLOWDOWN
   if (in_slowdown){
+    speed_setpoint = slowdown_speed;
+    return;
+  }
+
+  if (!motor_running){
+    speed_setpoint = 0.0;
     return;
   }
   int pot_value = analogRead(pot_pin);
@@ -21,15 +28,15 @@ void get_speed_value(){
 
   // HANDLE LED
   int R = map(pot_value,0,1023,255,0);
-  RGB_LED(R,pwm,0);
+  int G = map(pot_value, 0,1023, 0, 255);
+  RGB_LED(R,G,0);
 }
 
 
 // Get direction based on switch
-int get_direction(){
+void get_direction(){
   int forward_switch = digitalRead(forward_pin);
   int reverse_switch = digitalRead(reverse_pin);
-  int dir;
 
   if (forward_switch && reverse_switch){  // Don't run motor
     dir = 0;
@@ -40,5 +47,4 @@ int get_direction(){
   else if (!forward_switch && reverse_switch){ // Run Reverse
     dir = -1;
   }
-  return dir;
 }

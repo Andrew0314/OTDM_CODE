@@ -1,12 +1,12 @@
 #include <AutoPID.h>
 
 // CONFIG PARAMS
-const int OPEN_CLOSE_DELAY = 5000;
-bool test_door_open = true;
-bool run_with_encoder = false;
+const int OPEN_CLOSE_DELAY = 20000;
+bool test_door_open = false;
+bool run_with_encoder = true;
 bool run_with_pid = false;
-bool run_with_pods = false;
-bool run_with_slowdown = false;
+bool run_with_pods = true;
+bool run_with_slowdown = true;
 
 // LED PINS
 int receive_led_blue = 8;
@@ -24,8 +24,8 @@ const int REMOTE_PIN = 22;
 // MOTOR PINS
 const int R_EN = 42;
 const int L_EN = 43;
-const int L_PWM = 41;
-const int R_PWM = 40;
+const int L_PWM = 7;
+const int R_PWM = 6;
 
 // POTENTIOMETER PIN
 #define pot_pin A0
@@ -65,22 +65,32 @@ struct remote_output{
 };
 
 // MOTOR STATUS
-bool motor_running = false;
-double pwm;   // FINAL VALUES
+bool motor_running = true;
 int dir;
+float rpm;
 
-// PID values
-double speed_setpoint;
-double speed_current;
-
-double motor_deadband = 60;
+// MOTOR PARAMS
+double motor_deadband = 10;
 double max_speed = 2; // ft/s
-double slowdown_tolerance = 3; // ft
-double slowdown_speed = .25; // ft/s
+
+// PID VALUES
+double speed_setpoint;
+double unfiltered_speed_current;
+double speed_current;
+double pwm;   // FINAL VALUES
+
+// PID CONSTANTS
+double kp = 170;
+double ki = .06;
+double kd = 0;
+
+// RUNNING PARAMETERS
+double slowdown_tolerance = 2; // ft  when to slow down to slower speed
+double slowdown_speed = .5; // ft/s
+double stop_tolerance = .1; //ft when to stop
 bool in_slowdown = false;
-double kp = 1;
-double ki = 1;
-double kd = 1;
+
+
 
 int pid_timestep = 200;
 
@@ -90,6 +100,21 @@ AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,
 double old_motor_pwm_base, old_dir_base; 
 
 
+// LEARNED:
+// use better delay in encoder file for delays that don't work
+
+// TODO:
+// tune pid
+// add ultrasonic/ir sensor for pod location verification
+// add gradual slowdown it is very abrupt
+// test and implement with pods ie waiting for pod to respond back. (I believe it should work out the box but needs test)
+
+// ONLY HAVE CODE FOR NO PODS TESTED
+// TO IMPLEMENT PODS I BELIEVE YOU WILL ONLY NEED TO EDIT HANDLE POD LOCATION FUNCTION IN ENCODER FILE
+
+
+// PROBLEMS:
+// NANO NOT SENDING READY2go back
 void setup() {
   Serial.begin(115200);
   setup_remote(REMOTE_PIN);
@@ -104,71 +129,43 @@ void setup() {
 }
 
 void loop() {
+  // DEBUG PRINT STATMENTS
   //print_pod_status();
   //print_pot();
+  print_motor_speed();
+  //print_pod_location(1);
+  //print_motor_dir();
+  //debug_encoder();
+  //plot_rpm();
   
-  assign_motor_pwm();
+  calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
+  get_speed_value();              // Reads potentiometer into speed_setpoint
+  get_direction();                // Reads switch
+  assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
+  handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
+  
+  // LOGIC FOR CONFIG PARAMS 
   if (test_door_open){
     test_door();
   }else{
     if (run_with_pods){
+      Serial.println(pod1.ready2go);
       // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
       if (pod1.ready2go){// && pod2.ready2go){
+        
+        //speed_setpoint = slowdown_speed;
         run_motor(dir,pwm);    
       }else{
         stop_motor();
+ 
       }
     }else{
       run_motor(dir,pwm);
     }
-  delay(200);
   }
+    delay(100);
 }
 
-
-void handle_inputs(){
-  // I PROPOSE NO REMOTE JUST COMPLICATES THINGS 
-  //  // REMOTE INPUTS
-//  remote_output remote_vals = get_remote_input();
-// 
-//  if (remote_vals.new_data){  // If there is new data from the remote set values
-//   
-//    if (remote_vals.motor_pwm_remote != 0){
-//      pwm = remote_vals.motor_pwm_remote;        
-//    }
-//    if (    remote_vals.dir_remote != 0){
-//      dir = remote_vals.dir_remote;      
-//    }
-//    
-//    // TRANSMIT POD OPEN AND CLOSE
-//    if (remote_vals.do_pod_stuff){
-//      stop_motor();
-//      if (remote_vals.pod_number == 1){
-//        pod1.openSesimy = remote_vals.openSesimy;
-//        transmitData(1);
-//      }else if (remote_vals.pod_number == 2){
-//        pod2.openSesimy = remote_vals.openSesimy;  
-//        transmitData(2);
-//      }
-//      delay(OPEN_CLOSE_DELAY);
-//    }
-// }
-    
-  // BASE CONTROL TAKES PRIORITY OVER REMOTE
-  get_speed_value();
-  int cur_dir = get_direction();
-  //run_motor(cur_dir,motor_pwm_base);
-  // If base command changes, execute and overwrite remote
-  if (speed_setpoint != old_motor_pwm_base){ 
-    pwm = speed_setpoint;    
-  }
-
-  if (cur_dir != old_dir_base){
-    dir = cur_dir;
-  }
-  old_motor_pwm_base = speed_setpoint;
-  old_dir_base = cur_dir;
-}
 
 void test_door(){
   stop_motor();
