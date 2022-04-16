@@ -24,19 +24,5 @@ void run_motor(int dir, int pwm){
 void stop_motor(){
   motor.Stop();
   motor.Disable();
-  speed_setpoint = 0.0;
-}
-
-void slowdown_motor(){
-  in_slowdown = true;
-  motor_running = true;
-  if (run_with_incremental_slowdown){
-    double slowdown_increment = (speed_setpoint - slowdown_speed ) / slowdown_steps;
-    for (int i = 0; i < slowdown_steps; i++){
-      speed_setpoint -= slowdown_increment;
-      delay(slowdown_delay);
-    }
-  }else{
-      speed_setpoint = slowdown_speed;
-  }
+  motor_running = false;
 }

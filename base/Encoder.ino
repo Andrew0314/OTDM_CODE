@@ -9,7 +9,7 @@ int max_reverse_ticks = 2000;
 bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
-float feet_per_transit = 21.0;
+float feet_per_transit = 19.0;
 float ticks_per_rev = 600; // ticks/rev
 float distance_per_rev = 14 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev;
@@ -92,9 +92,7 @@ void handle_pod_location(){
   
   if (encoder_ticks >= start_slowdown1 and encoder_ticks < stop1_ticks) // ENTERING SLOWDOWN
   {
-    speed_setpoint = slowdown_speed;
-    in_slowdown = true;
-    motor_running = true;
+    slowdown_motor();
   }
   else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING
   {
@@ -114,15 +112,11 @@ void handle_pod_location(){
     if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){ // THIS MAKES SURE ABOVE CASE CAN"T BE CALLED AGAIN AND RESETS LOAD COMPLETE FOR NEXT ROUND
       load_complete = false;      
     }
-    speed_setpoint = slowdown_speed;
-    in_slowdown = true;
-    motor_running = true;
+    slowdown_motor();
   }
   else if (encoder_ticks >= start_slowdown2 and encoder_ticks < stop2_ticks) // ENTERING SLOWDOWN
   {
-     speed_setpoint = slowdown_speed;
-     in_slowdown = true;
-     motor_running = true;
+     slowdown_motor();
   }
   else if (abs(encoder_ticks - (ticks_per_transit * 2)) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING
   {
@@ -139,12 +133,10 @@ void handle_pod_location(){
   }
   else if((encoder_ticks <= stop_slowdown2 and encoder_ticks > ticks_per_transit*2 and motor_running) or load_complete) // EXITING SLOWDOWN
   {
-    speed_setpoint = slowdown_speed;
     if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){
       load_complete = false;      
     }
-    in_slowdown = true;    
-    motor_running = true;
+    slowdown_motor();
   }
 }
 

@@ -49,7 +49,7 @@ void print_pod_location(int pod_number){
       Serial.println(" ft moving down");
     }
   }else   if (pod_number == 2){
-    Serial.println("POD 1:");
+    Serial.println("POD 2:");
     if (abs(distance_traveled - feet_per_transit) <= stop_tolerance){
       Serial.println("Unloading");
     }
@@ -78,7 +78,7 @@ void print_pid(){
   Serial.println(pwm);
   Serial.println();
   Serial.println();
-    Serial.println();
+  Serial.println();
 }
 void print_motor_dir(){
   Serial.print("Motor Direction: ");
@@ -97,22 +97,39 @@ void debug_encoder(){
   Serial.println();
     Serial.println();
 }
-void print_pod_status(){
-  Serial.println("POD1:");
+void print_pod_status(int pod){
+  if (pod == 1){
+    Serial.println("POD1:");
   Serial.print("Ready: ");
   Serial.print(pod1.ready2go);
   Serial.print(" Open: ");
   Serial.print(pod1.openSesimy);
-  Serial.println();
+  
+  }else if(pod ==2){
   Serial.println("POD2:");
   Serial.print("Ready: ");
   Serial.print(pod2.ready2go);
   Serial.print(" Open: ");
-  Serial.print(pod2.openSesimy);
+  Serial.print(pod2.openSesimy);    
+  }
+
+
   Serial.println();
   Serial.println();
     Serial.println();
       
+}
+
+void rgb(){
+  RGB_LED(0,0,255);
+  delay(1000);
+  RGB_LED(0,255,0);
+  delay(1000);
+  RGB_LED(255,0,0);
+  delay(1000);
+  RGB_LED(0,0,0);
+  
+  
 }
 
 void all_lights(){

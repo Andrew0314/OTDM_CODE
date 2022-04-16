@@ -11,13 +11,13 @@ void setup_LED(){
 
 void flashlight(int x){
       digitalWrite(x, HIGH);
-      delay (200);
+      delay (600);
       digitalWrite(x, LOW);
-      delay(200);
+      delay(600);
       digitalWrite(x, HIGH);
-      delay (200);
+      delay (600);
       digitalWrite(x, LOW);
-      delay(200);
+      delay(600);
 }
 
 void RGB_LED(int r, int g, int b){

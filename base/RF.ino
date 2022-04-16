@@ -20,23 +20,32 @@ void setup_RF(){
    radio.openWritingPipe(pod2_send_address);
    radio.startListening();  // put radio in TX mode
    radio.maskIRQ(1,1,0);
-   attachInterrupt(digitalPinToInterrupt(rf_int_pin), recieveData, FALLING);
+   // digitalPinToInterrupt(rf_int_pin) use if using direct pin num
+   attachInterrupt(rf_int_pin, recieveData, FALLING);
    digitalWrite(receive_led_blue,HIGH);
 }
 
 
 void recieveData(){
-    
+    Serial.println("RECIEVED");
     uint8_t pipe;
+    msg package;
     if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it 
       if (pipe == 1){
-        radio.read(&pod1, sizeof(msg));            // fetch payload from FIFO
+        radio.read(&package, sizeof(msg));            // fetch payload from FIFO
+        pod1.openSesimy = package.openSesimy;
+        pod1.ready2go=package.ready2go ;        
       }
       if (pipe == 2){
-        radio.read(&pod2, sizeof(msg));            // fetch payload from FIFO
+        radio.read(&package, sizeof(msg));            // fetch payload from FIFO
+        pod2.openSesimy = package.openSesimy;
+        pod2.ready2go=package.ready2go ;
       }
-      flashlight(receive_led_blue);      
-    }
+      if (pod1.ready2go){
+        digitalWrite(running_led_green,HIGH);
+      }
+      flashlight(receive_led_blue);   
+    }  
 }
 
 void transmitData(int pod_number){
@@ -45,11 +54,13 @@ void transmitData(int pod_number){
     msg package; 
     if (pod_number == 1){
       radio.openWritingPipe(pod1_send_address);
-      package = pod1;
+      package.openSesimy = pod1.openSesimy;
+      package.ready2go = pod1.ready2go;
       pod1.ready2go = false;
     }else if ( pod_number == 2){
       radio.openWritingPipe(pod2_send_address);
-      package = pod2;
+      package.openSesimy = pod2.openSesimy;
+      package.ready2go = pod2.ready2go;
       pod2.ready2go = false;
     }
     radio.stopListening();  // put radio in TX mode
@@ -61,4 +72,5 @@ void transmitData(int pod_number){
       digitalWrite(send_led_red,LOW);
     }
     radio.startListening();
+
 }
