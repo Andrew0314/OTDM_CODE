@@ -1,184 +1,222 @@
+#include <AutoPID.h>
 
+// CONFIG PARAMS
+const int OPEN_CLOSE_DELAY = 20000;
+bool test_door_open = false;
+bool run_with_encoder = true;
+bool run_with_pid = false;
+bool run_with_pods = false;
+bool run_with_slowdown = true;
+bool run_with_incremental_slowdown = false;
 
-#include <SPI.h>
-#include "printf.h"
-#include "RF24.h"
+// LED PINS
+int receive_led_blue = 8;
+int send_led_red = 9;
+int running_led_green = 10;
 
-// instantiate an object for the nRF24L01 transceiver
-RF24 radio(9, 10); // using pin 7 for the CE pin, and pin 8 for the CSN pin
+// RGB PINS
+int R_pin = 11;
+int G_pin = 12;
+int B_pin = 13; 
 
-volatile bool encoder_direction = false; // true is cw false is ccw
-volatile int encoder_ticks = 0;
-volatile int reverse_ticks = 0;
-int max_reverse_ticks = 2000;
-bool reverse_flag = false;
+// IR REMOTE PIN
+const int REMOTE_PIN = 22;
 
-uint8_t pod1_send_address[6] = "3Node";
-uint8_t pod1_receive_address[6] = "4Node";
-uint8_t pod2_send_address[6] = "1Node";
-uint8_t pod2_receive_address[6] = "2Node";
+// MOTOR PINS
+const int R_EN = 42;
+const int L_EN = 43;
+const int L_PWM = 7;
+const int R_PWM = 6;
 
-int blue = 8;
-int red = 7;
-int green = 6;
+// POTENTIOMETER PIN
+#define pot_pin A0
 
+// DIRECTION SWITCH PINS
+int forward_pin = 26;
+int reverse_pin = 28;
+
+// RF PINS
+int CE = 5;
+int CSN = 4;
+
+// INTERRUPT PINS
+
+int encoderA_pin = 18;
+int encoderB_pin = 19;
+int rf_int_pin = 1; // WANT TO SHOOT MYSELF THIS MEANS 3!!!!!!!!!!!!!
+
+// RF MESSAGES TO PODS
 struct msg{
   bool openSesimy;
   bool ready2go;
-  //accleronmeter
-  //check if pod is finished 
 };
 
-msg pod1 = {0,1};
-msg pod2 = {0,1};
+// INDIVIDUAL POD MESSAGE
+volatile msg pod1 = {0,1};
+volatile msg pod2 = {0,1};
+
+// OUTPUT FROM REMOTE
+struct remote_output{
+  bool new_data = false;
+  bool do_pod_stuff = false;
+  int  motor_pwm_remote = 0;
+  int  dir_remote = 0;
+  int  openSesimy = 0;
+  int  pod_number = 0;  
+};
+
+// MOTOR STATUS
+bool motor_running = true;
+int dir;
+float rpm;
+
+// MOTOR PARAMS
+double motor_deadband = 10;
+double max_speed = 2; // ft/s
+
+// PID VALUES
+double speed_setpoint;
+double unfiltered_speed_current;
+double speed_current;
+double pwm;   // FINAL VALUES
+
+// PID CONSTANTS
+double kp = 2000;
+double ki = 0;
+double kd = 0;
+
+// RUNNING PARAMETERS
+double slowdown_tolerance = 3; // ft  when to slow down to slower speed
+double slowdown_speed = .75; // ft/s
+int slowdown_steps = 10;
+int slowdown_delay = 100;
+double stop_tolerance = .1; //ft when to stop
+bool in_slowdown = false;
 
 
 
+int pid_timestep = 20;
+
+AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,kd);
+
+// PREVIOUS BASE READINGS
+double old_motor_pwm_base, old_dir_base; 
+
+
+int prev_dir = 0;
+int prev_pwm = 0;
+
+// LEARNED:
+// use better delay in encoder file for delays that don't work
+
+// TODO:
+// tune pid
+// add ultrasonic/ir sensor for pod location verification
+// add gradual slowdown it is very abrupt
+// test and implement with pods ie waiting for pod to respond back. (I believe it should work out the box but needs test)
+
+// ONLY HAVE CODE FOR NO PODS TESTED
+// TO IMPLEMENT PODS I BELIEVE YOU WILL ONLY NEED TO EDIT HANDLE POD LOCATION FUNCTION IN ENCODER FILE
+
+
+// PROBLEMS:
+// NANO NOT SENDING READY2go back
+// BLUE RGB LED DOESN'T WORK THINK IT JUST DOESN'T WORK ON PIN 13
 
 void setup() {
-
   Serial.begin(115200);
-  
-  if (!radio.begin()) {
-    Serial.println(F("radio hardware is not responding!!"));
-    while (1) {} // hold in infinite loop
-  }
-   radio.setPALevel(RF24_PA_LOW);
-   
-   radio.openReadingPipe(1, pod1_receive_address); 
-   radio.openReadingPipe(2, pod2_receive_address); 
-   radio.openWritingPipe(pod1_send_address);
-   radio.openWritingPipe(pod2_send_address);
-   radio.startListening();  // put radio in TX mode
+  //setup_remote(REMOTE_PIN);
+  //setup_RF();
+  setup_encoder();
+  setup_motor();
+  setup_LED();
+  setup_input();
+  //setup_pid();
+  all_lights();
+  rgb();
+  delay(2000);
+  all_lights_off();
 
-   pinMode(blue, OUTPUT);
-   pinMode(green, OUTPUT);
-   pinMode(red, OUTPUT);
-
-
-   
-   radio.maskIRQ(1,1,0);
-   attachInterrupt(digitalPinToInterrupt(18), recieveData, FALLING);
-
-
-   pinMode(2,INPUT_PULLUP);
-   pinMode(3,INPUT_PULLUP);
-   attachInterrupt(digitalPinToInterrupt(2), encoderA, RISING);
-   attachInterrupt(digitalPinToInterrupt(3), encoderB, RISING);
-
-  
-   
 }
 
 void loop() {
-  digitalWrite(green,HIGH);
- 
-
-
-
+  // DEBUG PRINT STATMENTS
+  //print_pod_status(1);
+  //print_pot();
+  //print_motor_speed();
+  //print_pod_location(1);
+  //print_pod_location(2);
+  //print_motor_dir();
+  //debug_encoder();
+  //plot_rpm();
+  //print_pid();
+  //calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
+  get_speed_value();              // Reads potentiometer into speed_setpoint
+  get_direction();                // Reads switch
+  assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
+  handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
   
-//  pod1.openSesimy = 1;
-//  transmitData(1);
-//  delay(1000);
-//  pod2.openSesimy = 1;
-//  transmitData(2);
-//  delay(1000);
-//  
-//
-
-}
-
-
-
-void recieveData(){
-    digitalWrite(red,LOW);
-    uint8_t pipe;
-    if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it 
-      if (pipe == 1){
-        radio.read(&pod1, sizeof(msg));            // fetch payload from FIFO
+  // LOGIC FOR CONFIG PARAMS 
+  if (test_door_open){
+    test_door();
+  }else{
+    if (run_with_pods){
+      // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
+      if (pod1.ready2go){// && pod2.ready2go){
+        
+        //speed_setpoint = slowdown_speed;
+        run_motor(dir,pwm);    
+      }else{
+        stop_motor();
       }
-      if (pipe == 2){
-        radio.read(&pod2, sizeof(msg));            // fetch payload from FIFO
-      }
-
-      digitalWrite(red,HIGH);
-      flashlight(blue); 
-          digitalWrite(green,HIGH);
-          
-  }
-}
-
-void transmitData(int pod_number){
-    msg package; 
-    if (pod_number == 1){
-      radio.openWritingPipe(pod1_send_address);
-      package = pod1;
-    }else if ( pod_number == 2){
-      radio.openWritingPipe(pod2_send_address);
-      package = pod2;
+    }else{
+      run_motor(dir,pwm);
     }
-    radio.stopListening();  // put radio in TX mode
-    bool report = radio.write(&package, sizeof(package));      // transmit & save the report
-    
-    if (report) {
-      flashlight(blue);
-    } else {
-      flashlight(red);
-    }
-    radio.startListening();
-}
-
-
-void flashlight(int x){
-      digitalWrite(x, HIGH);
-      delay (200);
-      digitalWrite(x, LOW);
-      delay(200);
-      digitalWrite(x, HIGH);
-      delay (200);
-      digitalWrite(x, LOW);
-      delay(200);
-
-}
-
-
-float ticks_per_rev = 600;
-float distance_per_rev = 14 * 3.1415 / 12; // feet
-float rev_per_transit = 5 / distance_per_rev;
-int ticks_per_transit = ticks_per_rev * rev_per_transit;
-
-
-
-void encoderA(){
-  if (!digitalRead(3) && digitalRead(2)){
-    encoder_direction = true;
-    encoder_ticks ++;
-    reverse_ticks = 0;
   }
-
-  if (encoder_ticks == ticks_per_transit){
-    pod1.openSesimy = 1;
-    transmitData(1);
-    digitalWrite(green,LOW);
-    
+    //delay(20);
+}
 
 
-  }else if (encoder_ticks == ticks_per_transit * 2){
+void test_door(){
+  // WORKING RECIEVE SEEMS THAT NOT USING DIGITAL PIN TO INTERRUPT WORKED
+  // POWER SUPPLY STOPPED WORKING WHEN POWERING NRF ONLY COMP WORKS NOW
+    stop_motor();
+    //for (int i = 0; i < 3; i++){
+      print_pod_status(1);
+      print_pod_status(2);
+      display_pod_ready();
+      delay(1000);
+      pod1.openSesimy = 1;
+      transmitData(1);
+      pod2.openSesimy = 1;
+      transmitData(2);
+      Serial.println("AFTER SENT:");
+      print_pod_status(1);
+      print_pod_status(2);
+      display_pod_ready();
+      delay(30000);
+      Serial.println("AFTER RECIEVE HOPEFULLY:");
+      print_pod_status(1);
+      print_pod_status(2);
+      display_pod_ready();
+      delay(30000);
+      //better_delay(60000);         
+      
+     
+    //}
+}
 
-    pod2.openSesimy = 1;
-     transmitData(2);
-      digitalWrite(green,LOW);
-    encoder_ticks = 0;
+
+void display_pod_ready(){
+  if (pod1.ready2go){
+    digitalWrite(running_led_green,HIGH);
+  }else{
+    digitalWrite(running_led_green,LOW);
   }
   
-}
-
-void encoderB(){
-    if (digitalRead(3) && !digitalRead(2)){
-    encoder_direction = false;
-    reverse_ticks++;
-    if (reverse_ticks == max_reverse_ticks){
-      reverse_flag = true;
-    }
+  if (pod2.ready2go){
+    RGB_LED(0,255,0);
+  }else{
+    RGB_LED(0,0,0);
   }
 }
