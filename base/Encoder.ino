@@ -9,7 +9,7 @@ int max_reverse_ticks = 2000;
 bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
-float feet_per_transit = 19.0;
+float feet_per_transit = 25.0;
 float ticks_per_rev = 1200; // ticks/rev
 float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
@@ -76,11 +76,15 @@ void calculate_motor_speed(){
 
 // USE THIS DELAY IF delay DOESN't SEEM TO DELAY
 void better_delay(unsigned long delay_time){
-    unsigned long t1 = millis();
+  //noInterrupts();
+    unsigned long start_time = millis();
     unsigned long t2 = millis();
-    while (abs(t2-t1) < delay_time){
+    while (abs(t2-start_time) < delay_time){
       t2 = millis();
+      //Serial.println(t2);
+      //Serial.println(start_time);
     }
+   // interrupts();
 }
 
 void slowdown_motor(){
@@ -95,6 +99,7 @@ void slowdown_motor(){
     }
   }else{
       speed_setpoint = slowdown_speed;
+      assign_motor_pwm();
   }
 }
 
@@ -105,8 +110,11 @@ void handle_pod_location(){
     in_slowdown = false;
     return;
   }
-  
-  if (encoder_ticks >= start_slowdown1 and encoder_ticks < stop1_ticks) // ENTERING SLOWDOWN
+
+//  if (encoder_ticks <= ticks_per_slowdown_tol){
+//    slowdown_motor();
+//  }
+   if (encoder_ticks >= start_slowdown1 and encoder_ticks < stop1_ticks) // ENTERING SLOWDOWN
   {
     slowdown_motor();
   }
@@ -144,10 +152,11 @@ void handle_pod_location(){
     pod2.openSesimy = 1;
     load_complete = true;
     if (!run_with_pods){
-      better_delay(5000);
+      better_delay(1000);
     }else{
       transmitData(2);
     }
+    Serial.println("FINISHED DELAY STARTING MOTOR");
    run_motor(dir,pwm);  
   }
   else if((encoder_ticks <= stop_slowdown2 and encoder_ticks > ticks_per_transit*2 and motor_running) or load_complete) // EXITING SLOWDOWN
@@ -156,7 +165,12 @@ void handle_pod_location(){
       load_complete = false;      
     }
     slowdown_motor();
+  }else{
+    in_slowdown = false;
+    get_speed_value();
+    assign_motor_pwm();
   }
+
 }
 
 
@@ -167,8 +181,12 @@ void encoderA(){
   if (digitalRead(encoderB_pin)){
     encoder_direction = true;
     encoder_ticks ++;
+    Serial.println(encoder_ticks);
     ellapsed_encoder_ticks++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
+    if (encoder_ticks >= ticks_per_transit*2){
+      encoder_ticks = 0;
+    }
   }else{
     reverse_ticks++;
     encoder_direction = false;
@@ -182,13 +200,13 @@ void encoderA(){
 void encoderB(){
 
       // INCREMENT CW ENCODER COUNTS
-  calculate_motor_speed();
+  //calculate_motor_speed();
 
   if (!digitalRead(encoderA_pin)){
     encoder_direction = true;
     encoder_ticks ++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-      
+    Serial.println(encoder_ticks);
   }else{
     reverse_ticks++;
     encoder_direction = false;
@@ -196,6 +214,6 @@ void encoderB(){
       reverse_flag = true;
     }
   }
-  handle_pod_location();
+  //handle_pod_location();
 
 }

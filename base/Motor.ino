@@ -12,7 +12,7 @@ void run_motor(int dir, int pwm){
   if (dir == prev_dir and abs(pwm - prev_pwm) <= 3){
     return;
   }
-   // motor.Enable();
+
   if (dir == 1){
     motor.TurnLeft(pwm);
     motor_running = true;
@@ -32,6 +32,8 @@ void run_motor(int dir, int pwm){
 
 void stop_motor(){
   motor.Stop();
+  prev_dir = 0;
+  prev_pwm = 0;
   //motor.Disable();
   speed_setpoint = 0.0;
 }
