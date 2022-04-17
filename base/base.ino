@@ -90,7 +90,7 @@ double slowdown_tolerance = 2; // ft  when to slow down to slower speed
 double slowdown_speed = .75; // ft/s
 int slowdown_steps = 10;
 int slowdown_delay = 100;
-double stop_tolerance = .1; //ft when to stop
+double stop_tolerance = 1; //ft when to stop
 bool in_slowdown = false;
 
 
@@ -144,7 +144,7 @@ void loop() {
   //print_pod_status(1);
   //print_pot();
   //print_motor_speed();
-  print_pod_location(1);
+  //print_pod_location(1);
   //print_pod_location(2);
   //print_motor_dir();
   //debug_encoder();

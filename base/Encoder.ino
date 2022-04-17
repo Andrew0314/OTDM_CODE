@@ -9,7 +9,7 @@ int max_reverse_ticks = 2000;
 bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
-float feet_per_transit = 25.0;
+float feet_per_transit = 10.0;
 float ticks_per_rev = 1200; // ticks/rev
 float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
@@ -35,6 +35,8 @@ volatile int ellapsed_encoder_ticks = 0;
 float ellapsed_time; 
 float bull_wheel_diam = 14/12; //ft
 bool load_complete = false;
+int which_pod = 1;
+
 
 void setup_encoder(){
    pinMode(encoderA_pin,INPUT_PULLUP);
@@ -110,62 +112,37 @@ void handle_pod_location(){
     in_slowdown = false;
     return;
   }
-
-//  if (encoder_ticks <= ticks_per_slowdown_tol){
-//    slowdown_motor();
-//  }
-   if (encoder_ticks >= start_slowdown1 and encoder_ticks < stop1_ticks) // ENTERING SLOWDOWN
+  Serial.println(encoder_ticks);
+  if (encoder_ticks <= ticks_per_slowdown_tol){
+    slowdown_motor();
+    Serial.println("START SLOWDOWN");
+  }
+  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_slowdown_tol) // ENTERING SLOWDOWN
   {
     slowdown_motor();
+    Serial.println("STATION SLOWDOWN");
   }
-  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
+  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
   {
+        Serial.println("STOP");
     stop_motor();
     in_slowdown = false;    // DISABLEs SPEED CONTROL
-    motor_running = false;  
-    pod1.openSesimy = 1;
-    load_complete = true; // ONLY RUNS THIS CASE ONCE
     if (!run_with_pods){
       better_delay(5000);
     }else{
-      transmitData(1);
+      pod1.openSesimy = 1;
+      transmitData(which_pod);
+      if (which_pod == 1){
+        which_pod = 2;
+      }else{
+        which_pod = 1;
     }
-    run_motor(dir,pwm);   // STARTS MOTOR AGAIN
+   }
+    get_speed_value();
+    assign_motor_pwm();   // STARTS MOTOR AGAIN
+    encoder_ticks = 0;
   }
-  
-  else if((encoder_ticks <= stop_slowdown1 and encoder_ticks > ticks_per_transit and motor_running) or load_complete) // EXITING SLOWDOWN
-  {
-    if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){ // THIS MAKES SURE ABOVE CASE CAN"T BE CALLED AGAIN AND RESETS LOAD COMPLETE FOR NEXT ROUND
-      load_complete = false;      
-    }
-    slowdown_motor();
-  }
-  else if (encoder_ticks >= start_slowdown2 and encoder_ticks < stop2_ticks) // ENTERING SLOWDOWN
-  {
-     slowdown_motor();
-  }
-  else if (abs(encoder_ticks - (ticks_per_transit * 2)) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING
-  {
-    stop_motor();
-    in_slowdown = false;
-    motor_running = false; 
-    pod2.openSesimy = 1;
-    load_complete = true;
-    if (!run_with_pods){
-      better_delay(1000);
-    }else{
-      transmitData(2);
-    }
-    Serial.println("FINISHED DELAY STARTING MOTOR");
-   run_motor(dir,pwm);  
-  }
-  else if((encoder_ticks <= stop_slowdown2 and encoder_ticks > ticks_per_transit*2 and motor_running) or load_complete) // EXITING SLOWDOWN
-  {
-    if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){
-      load_complete = false;      
-    }
-    slowdown_motor();
-  }else{
+  else{
     in_slowdown = false;
     get_speed_value();
     assign_motor_pwm();
@@ -181,12 +158,9 @@ void encoderA(){
   if (digitalRead(encoderB_pin)){
     encoder_direction = true;
     encoder_ticks ++;
-    Serial.println(encoder_ticks);
+    //Serial.println(encoder_ticks);
     ellapsed_encoder_ticks++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-    if (encoder_ticks >= ticks_per_transit*2){
-      encoder_ticks = 0;
-    }
   }else{
     reverse_ticks++;
     encoder_direction = false;
@@ -206,7 +180,8 @@ void encoderB(){
     encoder_direction = true;
     encoder_ticks ++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-    Serial.println(encoder_ticks);
+
+
   }else{
     reverse_ticks++;
     encoder_direction = false;
@@ -214,6 +189,6 @@ void encoderB(){
       reverse_flag = true;
     }
   }
-  //handle_pod_location();
+
 
 }
