@@ -103,6 +103,9 @@ AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,
 double old_motor_pwm_base, old_dir_base; 
 
 
+int prev_dir = 0;
+int prev_pwm = 0;
+
 // LEARNED:
 // use better delay in encoder file for delays that don't work
 
@@ -122,16 +125,18 @@ double old_motor_pwm_base, old_dir_base;
 
 void setup() {
   Serial.begin(115200);
-  setup_remote(REMOTE_PIN);
+  //setup_remote(REMOTE_PIN);
   //setup_RF();
   setup_encoder();
+  setup_motor();
   setup_LED();
   setup_input();
-  setup_pid();
+  //setup_pid();
   all_lights();
   rgb();
   delay(2000);
   all_lights_off();
+
 }
 
 void loop() {
@@ -145,7 +150,7 @@ void loop() {
   //debug_encoder();
   //plot_rpm();
   //print_pid();
-  calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
+  //calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
   get_speed_value();              // Reads potentiometer into speed_setpoint
   get_direction();                // Reads switch
   assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
@@ -163,13 +168,12 @@ void loop() {
         run_motor(dir,pwm);    
       }else{
         stop_motor();
- 
       }
     }else{
       run_motor(dir,pwm);
     }
   }
-    delay(20);
+    //delay(20);
 }
 
 

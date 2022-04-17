@@ -10,7 +10,7 @@ bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
 float feet_per_transit = 19.0;
-float ticks_per_rev = 600; // ticks/rev
+float ticks_per_rev = 1200; // ticks/rev
 float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
 int ticks_per_transit = ticks_per_rev * rev_per_transit;
@@ -40,7 +40,7 @@ void setup_encoder(){
    pinMode(encoderA_pin,INPUT_PULLUP);
    pinMode(encoderB_pin,INPUT_PULLUP);
    attachInterrupt(digitalPinToInterrupt(encoderA_pin), encoderA, RISING);
-//   attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
+   attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
 }
 
 void calculate_motor_speed(){
@@ -169,7 +169,6 @@ void encoderA(){
     encoder_ticks ++;
     ellapsed_encoder_ticks++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-
   }else{
     reverse_ticks++;
     encoder_direction = false;
@@ -177,24 +176,26 @@ void encoderA(){
       reverse_flag = true;
     }
   }
+
 }
 
-//void encoderB(){
-//
-//      // INCREMENT CW ENCODER COUNTS
-//  calculate_motor_speed();
-//
-//  if (!digitalRead(encoderA_pin)){
-//    encoder_direction = true;
-//    encoder_ticks ++;
-//    reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-//  }else{
-//    reverse_ticks++;
-//    encoder_direction = false;
-//    if (reverse_ticks == max_reverse_ticks){
-//      reverse_flag = true;
-//    }
-//  }
-//  handle_pod_location();
-//
-//}
+void encoderB(){
+
+      // INCREMENT CW ENCODER COUNTS
+  calculate_motor_speed();
+
+  if (!digitalRead(encoderA_pin)){
+    encoder_direction = true;
+    encoder_ticks ++;
+    reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
+      
+  }else{
+    reverse_ticks++;
+    encoder_direction = false;
+    if (reverse_ticks == max_reverse_ticks){
+      reverse_flag = true;
+    }
+  }
+  handle_pod_location();
+
+}

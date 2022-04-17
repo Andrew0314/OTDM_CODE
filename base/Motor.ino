@@ -4,8 +4,15 @@
 
 BTS7960 motor(L_EN, R_EN, L_PWM, R_PWM);
 
-void run_motor(int dir, int pwm){
+void setup_motor(){
   motor.Enable();
+}
+
+void run_motor(int dir, int pwm){
+  if (dir == prev_dir and abs(pwm - prev_pwm) <= 3){
+    return;
+  }
+   // motor.Enable();
   if (dir == 1){
     motor.TurnLeft(pwm);
     motor_running = true;
@@ -19,10 +26,12 @@ void run_motor(int dir, int pwm){
     stop_motor();
     digitalWrite(running_led_green, LOW);
   }
+  prev_dir = dir;
+  prev_pwm = pwm;
 }
 
 void stop_motor(){
   motor.Stop();
-  motor.Disable();
+  //motor.Disable();
   speed_setpoint = 0.0;
 }
