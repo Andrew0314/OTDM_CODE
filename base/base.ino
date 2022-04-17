@@ -86,7 +86,7 @@ double ki = 0;
 double kd = 0;
 
 // RUNNING PARAMETERS
-double slowdown_tolerance = 1; // ft  when to slow down to slower speed
+double slowdown_tolerance = 2; // ft  when to slow down to slower speed
 double slowdown_speed = .75; // ft/s
 int slowdown_steps = 10;
 int slowdown_delay = 100;

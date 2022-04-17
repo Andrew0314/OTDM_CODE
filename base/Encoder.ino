@@ -11,8 +11,8 @@ bool reverse_flag = false;
 // VALUES FOR DISTANCE TRAVELED
 float feet_per_transit = 19.0;
 float ticks_per_rev = 600; // ticks/rev
-float distance_per_rev = 14 * 3.1415 / 12; // ft/rev
-float rev_per_transit = feet_per_transit / distance_per_rev;
+float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
+float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
 int ticks_per_transit = ticks_per_rev * rev_per_transit;
 int ticks_per_slowdown_tol = ticks_per_rev * (slowdown_tolerance / distance_per_rev);
 int ticks_per_stop_tol = ticks_per_rev * (stop_tolerance / distance_per_rev);
@@ -82,6 +82,22 @@ void better_delay(unsigned long delay_time){
       t2 = millis();
     }
 }
+
+void slowdown_motor(){
+  in_slowdown = true;
+  motor_running = true;
+  
+  if (run_with_incremental_slowdown){
+    double slowdown_increment = (speed_setpoint - slowdown_speed ) / slowdown_steps;
+    for (int i = 0; i < slowdown_steps; i++){
+      speed_setpoint -= slowdown_increment;
+      delay(slowdown_delay);
+    }
+  }else{
+      speed_setpoint = slowdown_speed;
+  }
+}
+
 void handle_pod_location(){
   // IF AT CORRECT LOCATION TRANSMIT SIGNAL TO OPEN
   
@@ -94,19 +110,21 @@ void handle_pod_location(){
   {
     slowdown_motor();
   }
-  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING
+  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol and !load_complete) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
   {
     stop_motor();
-    in_slowdown = false;  
-    motor_running = false;
+    in_slowdown = false;    // DISABLEs SPEED CONTROL
+    motor_running = false;  
     pod1.openSesimy = 1;
-    transmitData(1);
-    load_complete = true; // ONLY RUNS THIS ONCE
+    load_complete = true; // ONLY RUNS THIS CASE ONCE
     if (!run_with_pods){
       better_delay(5000);
+    }else{
+      transmitData(1);
     }
     run_motor(dir,pwm);   // STARTS MOTOR AGAIN
   }
+  
   else if((encoder_ticks <= stop_slowdown1 and encoder_ticks > ticks_per_transit and motor_running) or load_complete) // EXITING SLOWDOWN
   {
     if (encoder_ticks > ticks_per_transit + ticks_per_stop_tol){ // THIS MAKES SURE ABOVE CASE CAN"T BE CALLED AGAIN AND RESETS LOAD COMPLETE FOR NEXT ROUND
@@ -124,10 +142,11 @@ void handle_pod_location(){
     in_slowdown = false;
     motor_running = false; 
     pod2.openSesimy = 1;
-    transmitData(2);
     load_complete = true;
     if (!run_with_pods){
       better_delay(5000);
+    }else{
+      transmitData(2);
     }
    run_motor(dir,pwm);  
   }
@@ -139,6 +158,8 @@ void handle_pod_location(){
     slowdown_motor();
   }
 }
+
+
 
 void encoderA(){
   // INCREMENT CW ENCODER COUNTS
