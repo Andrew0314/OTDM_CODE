@@ -20,7 +20,7 @@ void run_motor(int dir, int pwm){
   }else if (dir == -1){
     motor.TurnRight(pwm);
     motor_running = true;
-    flashlight(running_led_green);
+  //  flashlight(running_led_green);
   }
   else if (dir == 0){
     stop_motor();

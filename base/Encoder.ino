@@ -117,12 +117,12 @@ void handle_pod_location(){
     slowdown_motor();
     Serial.println("START SLOWDOWN");
   }
-  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_slowdown_tol) // ENTERING SLOWDOWN
+  else if (encoder_ticks >= start_slowdown1 and encoder_ticks < ticks_per_transit) // ENTERING SLOWDOWN
   {
     slowdown_motor();
     Serial.println("STATION SLOWDOWN");
   }
-  else if (abs(encoder_ticks - ticks_per_transit) <= ticks_per_stop_tol) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
+  else if (encoder_ticks >= ticks_per_transit) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
   {
         Serial.println("STOP");
     stop_motor();
