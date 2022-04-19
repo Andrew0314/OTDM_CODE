@@ -49,11 +49,12 @@ int rf_int_pin = 3; // WANT TO SHOOT MYSELF THIS MEANS 3!!!!!!!!!!!!!
 struct msg{
   bool openSesimy;
   bool ready2go;
+  int podNum;
 };
 
 // INDIVIDUAL POD MESSAGE
-volatile msg pod1 = {0,1};
-volatile msg pod2 = {0,1};
+volatile msg pod1 = {0,1,1};
+volatile msg pod2 = {0,1,2};
 
 // OUTPUT FROM REMOTE
 struct remote_output{
@@ -185,7 +186,7 @@ void test_door(){
       print_pod_status(1);
       print_pod_status(2);
       display_pod_ready();
-      delay(1000);
+      //delay(1000);
       pod1.openSesimy = 1;
       transmitData(1);
       pod2.openSesimy = 1;
@@ -194,12 +195,16 @@ void test_door(){
       print_pod_status(1);
       print_pod_status(2);
       display_pod_ready();
-      delay(60000);
+      while(!pod1.ready2go){
+        digitalWrite(running_led_green,HIGH);
+      }
+      digitalWrite(running_led_green,LOW);
+      //delay(60000);
       Serial.println("AFTER RECIEVE HOPEFULLY:");
       print_pod_status(1);
       print_pod_status(2);
       display_pod_ready();
-      delay(5000);
+      //delay(5000);
       //better_delay(60000);         
       
      
