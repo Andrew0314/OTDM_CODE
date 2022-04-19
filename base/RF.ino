@@ -21,13 +21,14 @@ void setup_RF(){
    radio.startListening();  // put radio in TX mode
    radio.maskIRQ(1,1,0);
    // digitalPinToInterrupt(rf_int_pin) use if using direct pin num
-   attachInterrupt(rf_int_pin, recieveData, FALLING);
+   pinMode(rf_int_pin,INPUT_PULLUP);
+   attachInterrupt(digitalPinToInterrupt(rf_int_pin), recieveData, FALLING);
    digitalWrite(receive_led_blue,HIGH);
 }
 
 
 void recieveData(){
-    Serial.println("RECIEVED");
+    digitalWrite(receive_led_blue,HIGH);
     uint8_t pipe;
     msg package;
     if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it 
@@ -42,9 +43,12 @@ void recieveData(){
         pod2.ready2go=package.ready2go ;
       }
       if (pod1.ready2go){
-        digitalWrite(running_led_green,HIGH);
+        RGB_LED(255,255,0);
       }
-      flashlight(receive_led_blue);   
+      if (pod2.ready2go){
+        RGB_LED(255,0,0);
+      }
+      digitalWrite(receive_led_blue,LOW);
     }  
 }
 
@@ -67,7 +71,6 @@ void transmitData(int pod_number){
     bool report = radio.write(&package, sizeof(package));      // transmit & save the report
     
     if (report) {
-      flashlight(send_led_red);
     } else {
       digitalWrite(send_led_red,LOW);
     }

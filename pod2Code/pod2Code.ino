@@ -25,18 +25,14 @@ int open_close_delay = 10000;
 int disp_led = 8;
 
 void setup() {
-  pinMode(disp_led,OUTPUT);
-  Serial.begin(115200);
-  while (!radio.begin()) {
-    Serial.println(F("radio hardware is not responding!!"));
-  }
+  setup_motor();
+
+  while (!radio.begin()) {}
   
   radio.setPALevel(RF24_PA_LOW);
-   
   radio.openReadingPipe(1, receive_address); 
   radio.openWritingPipe(send_address);
   radio.startListening();  // put radio in TX mode
-   
   radio.maskIRQ(1,1,0);
   pinMode(2,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), recieveData, FALLING); // ENSURE INTERRUPT IS WORKING
@@ -44,21 +40,9 @@ void setup() {
 }
 
 void loop() {
-//  if (flag){
-//  run_motor(1,100);
-//  delay(1000);
-//  stop_motor();
-//  flag = false;
-//  }
-digitalWrite(disp_led,LOW);
   if (package.openSesimy){
-   // noInterrupts();
-   package.openSesimy = false;
     openPod();
     closePod();
-   // interrupts();
-  }else{
-    stop_motor();
   }
 }
 
@@ -71,48 +55,27 @@ void openPod(){
 void closePod(){
     run_motor(-1,255);
     delay(open_close_delay);
+    package.openSesimy = false;
     package.ready2go = true;
     stop_motor();
     transmitData();
 }
 
-
 void recieveData(){
     uint8_t pipe;
+    msg temp_package;
     if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it
-      radio.read(&package, sizeof(msg));            // fetch payload from FIFO    
+      radio.read(&temp_package, sizeof(msg));            // fetch payload from FIFO    
+      package.openSesimy = temp_package.openSesimy;
+      package.ready2go = temp_package.ready2go;
       radio.stopListening();      
-  digitalWrite(disp_led,HIGH);
   }
-  
-   // radio.flush_rx();
-  
-
-//  flag = true;
-
 }
 
 void transmitData(){
-    radio.stopListening();  // put radio in TX mode
-    bool report = radio.write(&package, sizeof(package));      // transmit & save the report
-    
-    if (report) {
-      Serial.print(F("Transmission successful! "));          // payload was delivered
-    } else {
-      Serial.println(F("Transmission failed or timed out")); // payload was not delivered
-    }
+    msg temp_package;
+    temp_package.openSesimy = package.openSesimy;
+    temp_package.ready2go = package.ready2go;
+    bool report = radio.write(&temp_package, sizeof(package));      // transmit & save the report
     radio.startListening();
-}
-
-
-void flashlight(int x){
-      digitalWrite(x, HIGH);
-      delay (200);
-      digitalWrite(x, LOW);
-      delay(200);
-      digitalWrite(x, HIGH);
-      delay (200);
-      digitalWrite(x, LOW);
-      delay(200);
-
 }

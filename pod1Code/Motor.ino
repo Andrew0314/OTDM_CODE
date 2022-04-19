@@ -4,8 +4,10 @@
 
 BTS7960 motor(L_EN, R_EN, L_PWM, R_PWM);
 
+void setup_motor(){
+    motor.Enable();
+}
 void run_motor(int dir, int pwm){
-  motor.Enable();
   if (dir == 1){
     motor.TurnLeft(pwm);
   }else if (dir == -1){
@@ -18,5 +20,4 @@ void run_motor(int dir, int pwm){
 
 void stop_motor(){
   motor.Stop();
-  motor.Disable();
 }

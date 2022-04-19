@@ -9,7 +9,7 @@ int max_reverse_ticks = 2000;
 bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
-float feet_per_transit = 10.0;
+float feet_per_transit = 25.0;
 float ticks_per_rev = 1200; // ticks/rev
 float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
@@ -112,19 +112,15 @@ void handle_pod_location(){
     in_slowdown = false;
     return;
   }
-  Serial.println(encoder_ticks);
   if (encoder_ticks <= ticks_per_slowdown_tol){
     slowdown_motor();
-    Serial.println("START SLOWDOWN");
   }
   else if (encoder_ticks >= start_slowdown1 and encoder_ticks < ticks_per_transit) // ENTERING SLOWDOWN
   {
     slowdown_motor();
-    Serial.println("STATION SLOWDOWN");
   }
   else if (encoder_ticks >= ticks_per_transit) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
   {
-        Serial.println("STOP");
     stop_motor();
     in_slowdown = false;    // DISABLEs SPEED CONTROL
     if (!run_with_pods){
@@ -172,16 +168,10 @@ void encoderA(){
 }
 
 void encoderB(){
-
-      // INCREMENT CW ENCODER COUNTS
-  //calculate_motor_speed();
-
   if (!digitalRead(encoderA_pin)){
     encoder_direction = true;
     encoder_ticks ++;
     reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-
-
   }else{
     reverse_ticks++;
     encoder_direction = false;
@@ -189,6 +179,4 @@ void encoderB(){
       reverse_flag = true;
     }
   }
-
-
 }

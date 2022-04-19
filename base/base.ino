@@ -2,10 +2,10 @@
 
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 20000;
-bool test_door_open = false;
+bool test_door_open = true;
 bool run_with_encoder = true;
 bool run_with_pid = false;
-bool run_with_pods = false;
+bool run_with_pods = true;
 bool run_with_slowdown = true;
 bool run_with_incremental_slowdown = false;
 
@@ -43,7 +43,7 @@ int CSN = 4;
 
 int encoderA_pin = 18;
 int encoderB_pin = 19;
-int rf_int_pin = 1; // WANT TO SHOOT MYSELF THIS MEANS 3!!!!!!!!!!!!!
+int rf_int_pin = 3; // WANT TO SHOOT MYSELF THIS MEANS 3!!!!!!!!!!!!!
 
 // RF MESSAGES TO PODS
 struct msg{
@@ -126,7 +126,7 @@ int prev_pwm = 0;
 void setup() {
   Serial.begin(115200);
   //setup_remote(REMOTE_PIN);
-  //setup_RF();
+  setup_RF();
   setup_encoder();
   setup_motor();
   setup_LED();
@@ -150,21 +150,21 @@ void loop() {
   //debug_encoder();
   //plot_rpm();
   //print_pid();
-  //calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
-  get_speed_value();              // Reads potentiometer into speed_setpoint
-  get_direction();                // Reads switch
-  assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
-  handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
+
+  
   
   // LOGIC FOR CONFIG PARAMS 
   if (test_door_open){
     test_door();
   }else{
+    //calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
+    get_speed_value();              // Reads potentiometer into speed_setpoint
+    get_direction();                // Reads switch
+    assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
+    handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
     if (run_with_pods){
       // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
       if (pod1.ready2go){// && pod2.ready2go){
-        
-        //speed_setpoint = slowdown_speed;
         run_motor(dir,pwm);    
       }else{
         stop_motor();
@@ -194,12 +194,12 @@ void test_door(){
       print_pod_status(1);
       print_pod_status(2);
       display_pod_ready();
-      delay(30000);
+      delay(60000);
       Serial.println("AFTER RECIEVE HOPEFULLY:");
       print_pod_status(1);
       print_pod_status(2);
       display_pod_ready();
-      delay(30000);
+      delay(5000);
       //better_delay(60000);         
       
      
