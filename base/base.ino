@@ -2,7 +2,7 @@
 
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 20000;
-bool test_door_open = true;
+bool test_door_open = false;
 bool run_with_encoder = true;
 bool run_with_pid = false;
 bool run_with_pods = true;
@@ -55,6 +55,9 @@ struct msg{
 // INDIVIDUAL POD MESSAGE
 volatile msg pod1 = {0,1,1};
 volatile msg pod2 = {0,1,2};
+msg package2;
+
+volatile int podNumber = 1;
 
 // OUTPUT FROM REMOTE
 struct remote_output{
@@ -197,9 +200,11 @@ void test_door(){
       display_pod_ready();
       while(!pod1.ready2go){
         digitalWrite(running_led_green,HIGH);
+       
+       
       }
       digitalWrite(running_led_green,LOW);
-      //delay(60000);
+
       Serial.println("AFTER RECIEVE HOPEFULLY:");
       print_pod_status(1);
       print_pod_status(2);

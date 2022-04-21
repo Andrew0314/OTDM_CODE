@@ -30,40 +30,34 @@ void setup_RF(){
 void recieveData(){
     bool tx,txfail, recieveready;
     radio.whatHappened(tx,txfail, recieveready); 
-    Serial.println(tx);
-    Serial.println(txfail);
-    Serial.println(recieveready);
-    
-    digitalWrite(receive_led_blue,HIGH);
+    //Serial.println(tx);
+    //Serial.println(txfail);
+    //Serial.println(recieveready);
     uint8_t pipe;
-    msg package;
-    Serial.println("trying to recieve");
-    if (radio.available()) {
-          radio.read(&package, sizeof(msg));
-          int podNumber = package.podNum; 
-          Serial.println(package.podNum);
-          Serial.println(package.ready2go);
-          Serial.println(package.openSesimy);   
-          Serial.println("recieved");
-       
+
+   Serial.println("trying to recieve");
+    if (radio.available(&pipe)) {
+          radio.read(&package2, sizeof(msg));
+          //int podNumber = package2.podNum; 
+          //Serial.println(package2.podNum);
+          //Serial.println(package2.ready2go);
+          //Serial.println(package2.openSesimy);   
+          //Serial.println("recieved");
+      
           // is there a payload? get the pipe number that recieved it 
       if (podNumber == 1){
-        radio.read(&package, sizeof(msg));            // fetch payload from FIFO
-        pod1.openSesimy = package.openSesimy;
-        pod1.ready2go=package.ready2go;        
+              // fetch payload from FIFO
+        pod1.openSesimy = 0;
+        pod1.ready2go=1; 
+        podNumber = 2;       
+      }else if (podNumber == 2){
+                   // fetch payload from FIFO
+        pod2.openSesimy = 0;
+        pod2.ready2go=1;
+        podNumber = 1;
       }
-      if (podNumber == 2){
-        radio.read(&package, sizeof(msg));            // fetch payload from FIFO
-        pod2.openSesimy = package.openSesimy;
-        pod2.ready2go=package.ready2go ;
-      }
-      if (pod1.ready2go){
-        RGB_LED(255,255,0);
-      }
-      if (pod2.ready2go){
-        RGB_LED(255,0,0);
-      }
-      digitalWrite(receive_led_blue,LOW);
+
+//      digitalWrite(receive_led_blue,LOW);
     }  
 }
 
@@ -75,11 +69,13 @@ void transmitData(int pod_number){
       radio.openWritingPipe(pod1_send_address);
       package.openSesimy = pod1.openSesimy;
       package.ready2go = pod1.ready2go;
+      package.podNum = pod1.podNum;
       pod1.ready2go = false;
     }else if ( pod_number == 2){
       radio.openWritingPipe(pod2_send_address);
       package.openSesimy = pod2.openSesimy;
       package.ready2go = pod2.ready2go;
+      package.podNum = pod2.podNum;
       pod2.ready2go = false;
     }
     radio.stopListening();  // put radio in TX mode

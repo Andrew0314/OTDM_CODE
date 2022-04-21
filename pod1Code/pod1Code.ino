@@ -48,7 +48,7 @@ void loop() {
     openPod();
     closePod();
   }
-  //Serial.println(digitalRead(2));
+
   
 }
 
@@ -78,11 +78,13 @@ void recieveData(){
     uint8_t pipe;
     msg temp_package;
     if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it
-      radio.read(&temp_package, sizeof(msg));            // fetch payload from FIFO
+      radio.read(&temp_package, sizeof(msg)); 
+      Serial.println(sizeof(msg));// fetch payload from FIFO
       package.openSesimy = temp_package.openSesimy;
       package.ready2go = temp_package.ready2go;
       Serial.println(package.openSesimy);
       Serial.println(package.ready2go);
+      Serial.println(temp_package.podNum);
       radio.stopListening();
     }
   }
