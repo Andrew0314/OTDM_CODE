@@ -1,13 +1,3 @@
-/*
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp-now-two-way-communication-esp32/
-  
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files.
-  
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-*/
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -20,24 +10,14 @@
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
 #define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-//Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
-//Adafruit_BME280 bme;
-
-//30:C6:F7:14:A7:08
 
 // REPLACE WITH THE MAC Address of your receiver 
-uint8_t broadcastAddress[] = {0x30, 0xC6, 0xF7, 0x12, 0xA7, 0x08}; 
+uint8_t broadcastAddress[] = {0x30, 0xC6, 0xF7, 0x14, 0xA5, 0x60}; 
 
 // Define variables to store BME280 readings to be sent
 
 
-// Define variables to store incoming readings
-int incoming_openSessimy;
-int incoming_ready2go;
-int incoming_podNum;
-// Variable to store if sending data was successful
+
 String success;
 
 //Structure example to send data
@@ -73,9 +53,6 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  incoming_openSessimy = incomingReadings.openSessimy;
-  incoming_ready2go = incomingReadings.ready2go;
-  incoming_podNum = incomingReadings.podNum;
 }
  int led_pin = 12;
 void setup() {
@@ -84,12 +61,6 @@ void setup() {
   pinMode(led_pin,OUTPUT);
 
 
-//  // Init OLED display
-//  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-//    Serial.println(F("SSD1306 allocation failed"));
-//    for(;;);
-//  }
- 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
 
@@ -119,15 +90,9 @@ void setup() {
  
 void loop() {
 
- 
-  // Set values to send
-  //pod_msg.podNum = 1;
-  //pod_msg.openSessimy = 1;
-  //pod_msg.ready2go = 0;
- if (incoming_openSessimy == 1){
+ if (incomingReadings.openSessimy == 1){
     digitalWrite(led_pin,HIGH);
-    delay(2000);
-
+      incomingReadings.openSessimy = 0;
       pod_msg.openSessimy = 0;
       pod_msg.ready2go = 1;
       pod_msg.podNum = 1;
