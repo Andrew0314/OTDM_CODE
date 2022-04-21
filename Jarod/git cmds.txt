@@ -1,0 +1,9 @@
+git pull  pulls from github
+
+upload code:::
+git add --a
+git commit -m "WORKING TEXT"
+git push
+
+
+git checkout switches branches
