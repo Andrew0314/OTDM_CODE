@@ -45,49 +45,49 @@ void setup_encoder(){
    attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
 }
 
-void calculate_motor_speed(){
-    current_time = micros();
-    // THESE IF STATEMENTS ENSURE NO SHENANIGANS WITH STARTING AND STOPPING 
-    if (current_time <= prev_time){
-      speed_current = 0.0;
-      prev_time = current_time;
-      return;
-    }
-    if (ellapsed_encoder_ticks == 0){
-      speed_current = 0.0;
-      ellapsed_encoder_ticks = 0;
-      prev_time = current_time;
-      return;
-    }
-    ellapsed_time = abs(current_time - prev_time); // microseconds
-    if (ellapsed_time <= 1){
-      speed_current = 0.0;
-      ellapsed_encoder_ticks = 0;
-      prev_time = current_time;
-      return;
-    }
-    
-    float tps = ellapsed_encoder_ticks / (ellapsed_time/1000000); // Ticks per second
-    float rps = (tps/ticks_per_rev);
-    rpm = rps * 60;
-    unfiltered_speed_current = rps * 3.1415 * bull_wheel_diam; // ft/s
-    speed_current = exp_filter(unfiltered_speed_current);
-    prev_time = current_time;
-    ellapsed_encoder_ticks = 0;
-}
+//void calculate_motor_speed(){
+//    current_time = micros();
+//    // THESE IF STATEMENTS ENSURE NO SHENANIGANS WITH STARTING AND STOPPING 
+//    if (current_time <= prev_time){
+//      speed_current = 0.0;
+//      prev_time = current_time;
+//      return;
+//    }
+//    if (ellapsed_encoder_ticks == 0){
+//      speed_current = 0.0;
+//      ellapsed_encoder_ticks = 0;
+//      prev_time = current_time;
+//      return;
+//    }
+//    ellapsed_time = abs(current_time - prev_time); // microseconds
+//    if (ellapsed_time <= 1){
+//      speed_current = 0.0;
+//      ellapsed_encoder_ticks = 0;
+//      prev_time = current_time;
+//      return;
+//    }
+//    
+//    float tps = ellapsed_encoder_ticks / (ellapsed_time/1000000); // Ticks per second
+//    float rps = (tps/ticks_per_rev);
+//    rpm = rps * 60;
+//    unfiltered_speed_current = rps * 3.1415 * bull_wheel_diam; // ft/s
+//    speed_current = exp_filter(unfiltered_speed_current);
+//    prev_time = current_time;
+//    ellapsed_encoder_ticks = 0;
+//}
 
 // USE THIS DELAY IF delay DOESN't SEEM TO DELAY
-void better_delay(unsigned long delay_time){
-  //noInterrupts();
-    unsigned long start_time = millis();
-    unsigned long t2 = millis();
-    while (abs(t2-start_time) < delay_time){
-      t2 = millis();
-      //Serial.println(t2);
-      //Serial.println(start_time);
-    }
-   // interrupts();
-}
+//void better_delay(unsigned long delay_time){
+//  //noInterrupts();
+//    unsigned long start_time = millis();
+//    unsigned long t2 = millis();
+//    while (abs(t2-start_time) < delay_time){
+//      t2 = millis();
+//      //Serial.println(t2);
+//      //Serial.println(start_time);
+//    }
+//   // interrupts();
+//}
 
 void slowdown_motor(){
   in_slowdown = true;
@@ -128,9 +128,8 @@ void handle_pod_location(){
     stop_motor();
     in_slowdown = false;    // DISABLEs SPEED CONTROL
     if (!run_with_pods){
-      better_delay(5000);
+      delay(5000);
     }else{
-      pod1.openSesimy = 1;
       transmitData(which_pod);
       if (which_pod == 1){
         which_pod = 2;

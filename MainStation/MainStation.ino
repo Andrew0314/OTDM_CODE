@@ -1,14 +1,8 @@
 #include <heltec.h>
-
-
 #include <esp_now.h>
 #include <WiFi.h>
-
 #include <Wire.h>
 
-
-#define SCREEN_WIDTH 128  // OLED display width, in pixels
-#define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
 // REPLACE WITH THE MAC Address of your receiver 
 uint8_t broadcastAddress[] = {0xC8, 0xC9, 0xA3, 0xD4, 0x3C, 0x74}; 

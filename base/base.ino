@@ -1,4 +1,8 @@
-#include <AutoPID.h>
+//#include <AutoPID.h>
+#include <heltec.h>
+#include <esp_now.h>
+#include <WiFi.h>
+#include <Wire.h>
 
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 20000;
@@ -47,23 +51,16 @@ int rf_int_pin = 1; // WANT TO SHOOT MYSELF THIS MEANS 3!!!!!!!!!!!!!
 
 // RF MESSAGES TO PODS
 struct msg{
-  bool openSesimy;
+  int podNum;
+  bool openSessimy;
   bool ready2go;
 };
 
 // INDIVIDUAL POD MESSAGE
-volatile msg pod1 = {0,1};
-volatile msg pod2 = {0,1};
+msg incomingMsg = {0,0,0};
+msg pod1 = {0,0,1};
+msg pod2 = {0,0,1};
 
-// OUTPUT FROM REMOTE
-struct remote_output{
-  bool new_data = false;
-  bool do_pod_stuff = false;
-  int  motor_pwm_remote = 0;
-  int  dir_remote = 0;
-  int  openSesimy = 0;
-  int  pod_number = 0;  
-};
 
 // MOTOR STATUS
 bool motor_running = true;
@@ -97,7 +94,7 @@ bool in_slowdown = false;
 
 int pid_timestep = 20;
 
-AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,kd);
+//AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,kd);
 
 // PREVIOUS BASE READINGS
 double old_motor_pwm_base, old_dir_base; 
@@ -126,7 +123,7 @@ int prev_pwm = 0;
 void setup() {
   Serial.begin(115200);
   //setup_remote(REMOTE_PIN);
-  //setup_RF();
+  setup_WIFI();
   setup_encoder();
   setup_motor();
   setup_LED();
@@ -186,9 +183,9 @@ void test_door(){
       print_pod_status(2);
       display_pod_ready();
       delay(1000);
-      pod1.openSesimy = 1;
+      pod1.openSessimy = 1;
       transmitData(1);
-      pod2.openSesimy = 1;
+      pod2.openSessimy = 1;
       transmitData(2);
       Serial.println("AFTER SENT:");
       print_pod_status(1);

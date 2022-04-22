@@ -103,14 +103,14 @@ void print_pod_status(int pod){
   Serial.print("Ready: ");
   Serial.print(pod1.ready2go);
   Serial.print(" Open: ");
-  Serial.print(pod1.openSesimy);
+  Serial.print(pod1.openSessimy);
   
   }else if(pod ==2){
   Serial.println("POD2:");
   Serial.print("Ready: ");
   Serial.print(pod2.ready2go);
   Serial.print(" Open: ");
-  Serial.print(pod2.openSesimy);    
+  Serial.print(pod2.openSessimy);    
   }
 
 
