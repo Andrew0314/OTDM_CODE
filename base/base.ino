@@ -6,7 +6,7 @@
 
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 20000;
-bool test_door_open = false;
+bool test_door_open = true;
 bool run_with_encoder = true;
 bool run_with_pid = false;
 bool run_with_pods = false;
@@ -14,40 +14,34 @@ bool run_with_slowdown = true;
 bool run_with_incremental_slowdown = false;
 
 // LED PINS
-int receive_led_blue = 8;
-int send_led_red = 9;
-int running_led_green = 10;
+int receive_led_blue = 13;
+int send_led_red = 5;
+int running_led_green = 17;
 
 // RGB PINS
-int R_pin = 11;
-int G_pin = 12;
-int B_pin = 13; 
+//int R_pin = 12;
+//int G_pin = 14;
+//int B_pin = 27; 
 
-// IR REMOTE PIN
-const int REMOTE_PIN = 22;
 
 // MOTOR PINS
-const int R_EN = 42;
-const int L_EN = 43;
-const int L_PWM = 7;
-const int R_PWM = 6;
+const int R_EN = 33;
+const int L_EN = 32;
+const int L_PWM = 35;
+const int R_PWM = 34;
 
 // POTENTIOMETER PIN
-#define pot_pin A0
+#define pot_pin 37
 
 // DIRECTION SWITCH PINS
-int forward_pin = 26;
-int reverse_pin = 28;
+int forward_pin = 12;
+int reverse_pin = 14;
 
-// RF PINS
-int CE = 5;
-int CSN = 4;
 
 // INTERRUPT PINS
 
-int encoderA_pin = 18;
-int encoderB_pin = 19;
-int rf_int_pin = 1; // WANT TO SHOOT MYSELF THIS MEANS 3!!!!!!!!!!!!!
+int encoderA_pin = 39;
+int encoderB_pin = 38;
 
 // RF MESSAGES TO PODS
 struct msg{
@@ -126,13 +120,13 @@ void setup() {
   setup_WIFI();
   setup_encoder();
   setup_motor();
-  setup_LED();
+  //setup_LED();
   setup_input();
   //setup_pid();
-  all_lights();
-  rgb();
+  //all_lights();
+  //rgb();
   delay(2000);
-  all_lights_off();
+  //all_lights_off();
 
 }
 

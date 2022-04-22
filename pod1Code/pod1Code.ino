@@ -1,4 +1,3 @@
-#include <heltec.h>
 #include <esp_now.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -15,7 +14,7 @@ struct msg{
 };
 
 // INDIVIDUAL POD MESSAGE
-msg pod = {2,0,1};
+msg pod = {1,0,1};
 
 
 int open_close_delay = 10000;

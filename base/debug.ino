@@ -138,9 +138,9 @@ void all_lights(){
   digitalWrite(send_led_red, HIGH);
   digitalWrite(running_led_green, HIGH);
   digitalWrite(receive_led_blue, HIGH);
-  analogWrite(R_pin,255);
-  analogWrite(G_pin,255);
-  analogWrite(B_pin,255);
+//  analogWrite(R_pin,255);
+//  analogWrite(G_pin,255);
+//  analogWrite(B_pin,255);
 
 }
 
@@ -149,8 +149,8 @@ void all_lights_off(){
   digitalWrite(receive_led_blue, LOW);
   digitalWrite(send_led_red, LOW);
   digitalWrite(running_led_green, LOW);
-  analogWrite(R_pin,0);
-  analogWrite(G_pin,0);
-  analogWrite(B_pin,0);
+//  analogWrite(R_pin,0);
+//  analogWrite(G_pin,0);
+//  analogWrite(B_pin,0);
 
 }
