@@ -14,7 +14,7 @@ bool run_with_slowdown = true;
 bool run_with_incremental_slowdown = false;
 
 // LED PINS
-int receive_led_blue = 13;
+int receive_led_blue = 12;
 int send_led_red = 5;
 int running_led_green = 17;
 
@@ -25,17 +25,17 @@ int running_led_green = 17;
 
 
 // MOTOR PINS
-const int R_EN = 33;
-const int L_EN = 32;
-const int L_PWM = 35;
-const int R_PWM = 34;
+const int R_EN = 14;
+const int L_EN = 27;
+const int L_PWM = 26;
+const int R_PWM = 25;
 
 // POTENTIOMETER PIN
-#define pot_pin 37
+#define pot_pin 33
 
 // DIRECTION SWITCH PINS
-int forward_pin = 12;
-int reverse_pin = 14;
+int forward_pin = 32;
+int reverse_pin = 35;
 
 
 // INTERRUPT PINS
@@ -52,8 +52,8 @@ struct msg{
 
 // INDIVIDUAL POD MESSAGE
 msg incomingMsg = {0,0,0};
-msg pod1 = {0,0,1};
-msg pod2 = {0,0,1};
+volatile msg pod1 = {1,0,1};
+volatile msg pod2 = {2,0,1};
 
 
 // MOTOR STATUS
@@ -114,6 +114,8 @@ int prev_pwm = 0;
 // NANO NOT SENDING READY2go back
 // BLUE RGB LED DOESN'T WORK THINK IT JUST DOESN'T WORK ON PIN 13
 
+// PWM on ESP32 is different
+
 void setup() {
   Serial.begin(115200);
   //setup_remote(REMOTE_PIN);
@@ -142,15 +144,16 @@ void loop() {
   //plot_rpm();
   //print_pid();
   //calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
-  get_speed_value();              // Reads potentiometer into speed_setpoint
-  get_direction();                // Reads switch
-  assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
-  handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
+
   
   // LOGIC FOR CONFIG PARAMS 
   if (test_door_open){
     test_door();
   }else{
+      get_speed_value();              // Reads potentiometer into speed_setpoint
+  get_direction();                // Reads switch
+  assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
+  handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
     if (run_with_pods){
       // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
       if (pod1.ready2go){// && pod2.ready2go){
@@ -172,29 +175,22 @@ void test_door(){
   // WORKING RECIEVE SEEMS THAT NOT USING DIGITAL PIN TO INTERRUPT WORKED
   // POWER SUPPLY STOPPED WORKING WHEN POWERING NRF ONLY COMP WORKS NOW
     stop_motor();
-    //for (int i = 0; i < 3; i++){
-      print_pod_status(1);
-      print_pod_status(2);
-      display_pod_ready();
-      delay(1000);
-      pod1.openSessimy = 1;
-      transmitData(1);
-      pod2.openSessimy = 1;
-      transmitData(2);
-      Serial.println("AFTER SENT:");
-      print_pod_status(1);
-      print_pod_status(2);
-      display_pod_ready();
-      delay(30000);
-      Serial.println("AFTER RECIEVE HOPEFULLY:");
-      print_pod_status(1);
-      print_pod_status(2);
-      display_pod_ready();
-      delay(30000);
-      //better_delay(60000);         
-      
-     
-    //}
+    pod1.openSessimy = 1;
+    pod2.openSessimy = 1;
+    transmitData(1);
+    transmitData(2);
+
+    Serial.println("SENDING:");
+    print_pod_status(1);
+    print_pod_status(2);
+
+    while(!pod1.ready2go or !pod2.ready2go){ 
+    }
+
+    Serial.println("HOPEFULLY RECIEVED:");
+    print_pod_status(1);
+    print_pod_status(2);
+    delay(10000);
 }
 
 

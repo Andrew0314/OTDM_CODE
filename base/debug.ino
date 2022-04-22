@@ -99,26 +99,34 @@ void debug_encoder(){
 }
 void print_pod_status(int pod){
   if (pod == 1){
-    Serial.println("POD1:");
-  Serial.print("Ready: ");
-  Serial.print(pod1.ready2go);
-  Serial.print(" Open: ");
-  Serial.print(pod1.openSessimy);
-  
+    Serial.print("Pod: ");
+    Serial.print(pod1.podNum);
+    Serial.print("\tReady: ");
+    Serial.print(pod1.ready2go);
+    Serial.print("\tOpen: ");
+    Serial.println(pod1.openSessimy);    
   }else if(pod ==2){
-  Serial.println("POD2:");
-  Serial.print("Ready: ");
-  Serial.print(pod2.ready2go);
-  Serial.print(" Open: ");
-  Serial.print(pod2.openSessimy);    
+    Serial.print("Pod: ");
+    Serial.print(pod2.podNum);
+    Serial.print("\tReady: ");
+    Serial.print(pod2.ready2go);
+    Serial.print("\tOpen: ");
+    Serial.println(pod2.openSessimy);    
   }
-
-
   Serial.println();
   Serial.println();
-    Serial.println();
+  Serial.println();
       
 }
+
+//void print_msg(msg pod){
+//  Serial.print("Pod: ");
+//  Serial.print(pod.podNum);
+//  Serial.print("\tReady: ");
+//  Serial.print(pod.ready2go);
+//  Serial.print("\tOpen: ");
+//  Serial.println(pod.openSessimy);    
+//}
 
 void rgb(){
   RGB_LED(0,0,255);

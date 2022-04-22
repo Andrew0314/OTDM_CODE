@@ -112,19 +112,19 @@ void handle_pod_location(){
     in_slowdown = false;
     return;
   }
-  Serial.println(encoder_ticks);
+
   if (encoder_ticks <= ticks_per_slowdown_tol){
     slowdown_motor();
-    Serial.println("START SLOWDOWN");
+ 
   }
   else if (encoder_ticks >= start_slowdown1 and encoder_ticks < ticks_per_transit) // ENTERING SLOWDOWN
   {
     slowdown_motor();
-    Serial.println("STATION SLOWDOWN");
+ 
   }
   else if (encoder_ticks >= ticks_per_transit) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
   {
-        Serial.println("STOP");
+    
     stop_motor();
     in_slowdown = false;    // DISABLEs SPEED CONTROL
     if (!run_with_pods){

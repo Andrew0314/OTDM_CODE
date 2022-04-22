@@ -1,8 +1,6 @@
-#include <heltec.h>
 #include <esp_now.h>
 #include <WiFi.h>
 #include <Wire.h>
-
 
 uint8_t base_addr[] = {0x30, 0xC6, 0xF7, 0x14, 0xA5, 0x60}; 
 
@@ -33,6 +31,11 @@ void setup_WIFI(){
 
 // Callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    char macStr[18];
+  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  Serial.print("Sending to: ");
+  Serial.print(macStr);
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
@@ -40,24 +43,23 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&pod, incomingData, sizeof(pod));
-  Serial.println("RECIEVED:");
+  Serial.print("RECIEVED:\t"); 
   Serial.print("OPEN SESSIMY: ");
-  Serial.println(pod.openSessimy);
-  Serial.print("READY: ");
+  Serial.print(pod.openSessimy);
+  Serial.print("\tREADY: ");
   Serial.println(pod.ready2go);
 }
 
 void transmitData(){
   esp_err_t result;
   result = esp_now_send(base_addr, (uint8_t *) &pod, sizeof(pod));
-  Serial.println("Sending to base");
+  Serial.print("Sending to base:\t");
   if (result == ESP_OK){
     Serial.println("Sent with success");
-    Serial.println("Sent with success");
-    Serial.println("SENT:");
+    Serial.print("SENT:\t");
     Serial.print("OPEN SESSIMY: ");
-    Serial.println(pod.openSessimy);
-    Serial.print("READY: ");
+    Serial.print(pod.openSessimy);
+    Serial.print("\tREADY: ");
     Serial.println(pod.ready2go);
   }else {
     Serial.println("Error sending the data");
