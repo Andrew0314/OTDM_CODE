@@ -7,3 +7,6 @@ dev board 1
 
 dev board 2
 30:C6:F7:23:87:34
+
+dot screen
+uint8_t broadcastAddress[] = {0x30, 0xC6, 0xF7, 0x14, 0xA5, 0x60}; 
