@@ -3,13 +3,15 @@
 #include <esp_now.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <ESP32Encoder.h>
 
+ESP32Encoder encoder;
 // CONFIG PARAMS
 const int OPEN_CLOSE_DELAY = 20000;
-bool test_door_open = true;
+bool test_door_open = false;
 bool run_with_encoder = true;
 bool run_with_pid = false;
-bool run_with_pods = false;
+bool run_with_pods = true;
 bool run_with_slowdown = true;
 bool run_with_incremental_slowdown = false;
 
@@ -25,8 +27,8 @@ int running_led_green = 17;
 
 
 // MOTOR PINS
-const int R_EN = 14;
-const int L_EN = 27;
+//const int R_EN = 14;
+//const int L_EN = 27;
 const int L_PWM = 26;
 const int R_PWM = 25;
 
@@ -34,14 +36,14 @@ const int R_PWM = 25;
 #define pot_pin 33
 
 // DIRECTION SWITCH PINS
-int forward_pin = 32;
-int reverse_pin = 35;
+int forward_pin = 14;
+int reverse_pin = 27;
 
 
 // INTERRUPT PINS
 
-int encoderA_pin = 39;
-int encoderB_pin = 38;
+int encoderA_pin = 18;
+int encoderB_pin = 19;
 
 // RF MESSAGES TO PODS
 struct msg{
@@ -62,23 +64,24 @@ int dir;
 float rpm;
 
 // MOTOR PARAMS
-double motor_deadband = 10;
-double max_speed = 2; // ft/s
+int motor_deadband = 10;
+int max_speed = 2; // ft/s
 
 // PID VALUES
-double speed_setpoint;
+//double speed_setpoint;
 double unfiltered_speed_current;
-double speed_current;
-double pwm;   // FINAL VALUES
+//double speed_current;
+int pwm;   // FINAL VALUES
 
 // PID CONSTANTS
-double kp = 2000;
-double ki = 0;
-double kd = 0;
+//double kp = 2000;
+//double ki = 0;
+//double kd = 0;
 
 // RUNNING PARAMETERS
 double slowdown_tolerance = 3; // ft  when to slow down to slower speed
-double slowdown_speed = .75; // ft/s
+int slowdown_pwm = 60; 
+
 int slowdown_steps = 10;
 int slowdown_delay = 100;
 double stop_tolerance = .1; //ft when to stop
@@ -86,7 +89,7 @@ bool in_slowdown = false;
 
 
 
-int pid_timestep = 20;
+//int pid_timestep = 20;
 
 //AutoPID pid(&speed_current, &speed_setpoint, &pwm, motor_deadband, 255.0, kp,ki,kd);
 
@@ -118,13 +121,11 @@ int prev_pwm = 0;
 
 void setup() {
   Serial.begin(115200);
-  //setup_remote(REMOTE_PIN);
   setup_WIFI();
   setup_encoder();
   setup_motor();
-  //setup_LED();
   setup_input();
-  //setup_pid();
+  //setup_LED();
   //all_lights();
   //rgb();
   delay(2000);
@@ -133,14 +134,17 @@ void setup() {
 }
 
 void loop() {
+
+  
   // DEBUG PRINT STATMENTS
   //print_pod_status(1);
   //print_pot();
   //print_motor_speed();
-  //print_pod_location(1);
-  //print_pod_location(2);
+  print_pod_location(1);
+  print_pod_location(2);
   //print_motor_dir();
   //debug_encoder();
+  //debug_hbridge(true);
   //plot_rpm();
   //print_pid();
   //calculate_motor_speed();        // Calculates motor speed from encoder to speed_current variable
@@ -150,10 +154,10 @@ void loop() {
   if (test_door_open){
     test_door();
   }else{
-      get_speed_value();              // Reads potentiometer into speed_setpoint
-  get_direction();                // Reads switch
-  assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
-  handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
+    get_speed_value();              // Reads potentiometer into speed_setpoint
+    get_direction();                // Reads switch
+//    assign_motor_pwm();             // Assigns pwm variable with setpoint depending on if PID is enabled
+    handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
     if (run_with_pods){
       // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
       if (pod1.ready2go){// && pod2.ready2go){
@@ -178,6 +182,7 @@ void test_door(){
     pod1.openSessimy = 1;
     pod2.openSessimy = 1;
     transmitData(1);
+    delay(100);
     transmitData(2);
 
     Serial.println("SENDING:");
