@@ -12,7 +12,7 @@ int encoder_ticks = 0;
 //bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
-float feet_per_transit = 10.0;
+float feet_per_transit = 25;
 float ticks_per_rev = 1200; // ticks/rev
 float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
