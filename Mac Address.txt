@@ -1,0 +1,12 @@
+Penis Camera
+C8:C9:A3:D4:3C:74
+
+
+dev board 1
+34:86:5D:3F:DE:00
+
+dev board 2
+30:C6:F7:23:87:34
+
+dot screen
+uint8_t broadcastAddress[] = {0x30, 0xC6, 0xF7, 0x14, 0xA5, 0x60}; 

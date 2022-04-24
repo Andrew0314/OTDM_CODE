@@ -2,32 +2,34 @@
 void print_pot(){
   Serial.print("Potentiometer Reading: ");
   Serial.println(analogRead(pot_pin));
-    Serial.println();
-      Serial.println();
-        Serial.println();
-          Serial.println();
+  Serial.print("PWM: ");
+  Serial.println(pwm);
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
 }
 
 
-void plot_rpm(){
-  Serial.print(speed_current);
-  Serial.print(" ");
-  Serial.println(unfiltered_speed_current);
-  Serial.println();
-  Serial.println();
-  Serial.println();
-}
-void print_motor_speed(){
-  Serial.print("Motor Speed: ");
-  Serial.println(speed_current);
-  Serial.print("RPM: ");
-  Serial.println(rpm);
-  Serial.print("Motor Speed Setpoint: ");
-  Serial.println(speed_setpoint); 
-  Serial.println();
-  Serial.println();
-  Serial.println();
-}
+//void plot_rpm(){
+//  Serial.print(speed_current);
+//  Serial.print(" ");
+//  Serial.println(unfiltered_speed_current);
+//  Serial.println();
+//  Serial.println();
+//  Serial.println();
+//}
+//void print_motor_speed(){
+//  Serial.print("Motor Speed: ");
+//  Serial.println(speed_current);
+//  Serial.print("RPM: ");
+//  Serial.println(rpm);
+////  Serial.print("Motor Speed Setpoint: ");
+////  Serial.println(speed_setpoint); 
+//  Serial.println();
+//  Serial.println();
+//  Serial.println();
+//}
 
 void print_pod_location(int pod_number){
   
@@ -91,34 +93,42 @@ void print_motor_dir(){
 void debug_encoder(){
   Serial.print("Encoder Ticks: ");
   Serial.println(encoder_ticks);
-  Serial.print("Reverse Ticks: ");
-  Serial.println(reverse_ticks);
+//  Serial.print("Reverse Ticks: ");
+//  Serial.println(reverse_ticks);
   Serial.println();
   Serial.println();
     Serial.println();
 }
 void print_pod_status(int pod){
   if (pod == 1){
-    Serial.println("POD1:");
-  Serial.print("Ready: ");
-  Serial.print(pod1.ready2go);
-  Serial.print(" Open: ");
-  Serial.print(pod1.openSesimy);
-  
+    Serial.print("Pod: ");
+    Serial.print(pod1.podNum);
+    Serial.print("\tReady: ");
+    Serial.print(pod1.ready2go);
+    Serial.print("\tOpen: ");
+    Serial.println(pod1.openSessimy);    
   }else if(pod ==2){
-  Serial.println("POD2:");
-  Serial.print("Ready: ");
-  Serial.print(pod2.ready2go);
-  Serial.print(" Open: ");
-  Serial.print(pod2.openSesimy);    
+    Serial.print("Pod: ");
+    Serial.print(pod2.podNum);
+    Serial.print("\tReady: ");
+    Serial.print(pod2.ready2go);
+    Serial.print("\tOpen: ");
+    Serial.println(pod2.openSessimy);    
   }
-
-
   Serial.println();
   Serial.println();
-    Serial.println();
+  Serial.println();
       
 }
+
+//void print_msg(msg pod){
+//  Serial.print("Pod: ");
+//  Serial.print(pod.podNum);
+//  Serial.print("\tReady: ");
+//  Serial.print(pod.ready2go);
+//  Serial.print("\tOpen: ");
+//  Serial.println(pod.openSessimy);    
+//}
 
 void rgb(){
   RGB_LED(0,0,255);
@@ -138,9 +148,9 @@ void all_lights(){
   digitalWrite(send_led_red, HIGH);
   digitalWrite(running_led_green, HIGH);
   digitalWrite(receive_led_blue, HIGH);
-  analogWrite(R_pin,255);
-  analogWrite(G_pin,255);
-  analogWrite(B_pin,255);
+//  analogWrite(R_pin,255);
+//  analogWrite(G_pin,255);
+//  analogWrite(B_pin,255);
 
 }
 
@@ -149,8 +159,30 @@ void all_lights_off(){
   digitalWrite(receive_led_blue, LOW);
   digitalWrite(send_led_red, LOW);
   digitalWrite(running_led_green, LOW);
-  analogWrite(R_pin,0);
-  analogWrite(G_pin,0);
-  analogWrite(B_pin,0);
+//  analogWrite(R_pin,0);
+//  analogWrite(G_pin,0);
+//  analogWrite(B_pin,0);
+
+}
+
+void debug_hbridge(bool with_pot){
+  Serial.print("DIR: ");
+  Serial.println(dir);
+  //Serial.println(pwm);
+  if (with_pot){
+    run_motor(dir,pwm);
+  }else{
+      int sp = 0;
+    if(Serial.available()>0){
+    int data,total;
+    sp=Serial.parseInt();
+    run_motor(1, sp);
+    Serial.print("data: ");
+    Serial.println(sp);
+    while (Serial.available() > 0) {
+       Serial.read();
+    }
+  }
+  }
 
 }

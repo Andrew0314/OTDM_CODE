@@ -1,118 +1,92 @@
-#include <SPI.h>
-#include "printf.h"
-#include "RF24.h"
+#include <esp_now.h>
+#include <WiFi.h>
+#include <Wire.h>
+//const int R_EN = 27;
+//const int L_EN = 14;
+const int L_PWM = 18;
+const int R_PWM = 19;
 
-
-RF24 radio(9, 10);
-
-int L_EN = 4;
-int R_EN = 5;
-int L_PWM = 6;
-int R_PWM = 7;
-
-uint8_t receive_address[6] = "1Node";
-uint8_t send_address[6] = "2Node";
 
 struct msg{
-  bool openSesimy;
+  int podNum;
+  bool openSessimy;
   bool ready2go;
 };
 
-volatile msg package = {0,1};
+// INDIVIDUAL POD MESSAGE
+msg pod = {2,0,1};
 
-int open_close_delay = 10000;
+int open_close_delay = 6000;
 
-int disp_led = 8;
+int dir = 1;
+int sp = 0;
 
 void setup() {
-  pinMode(disp_led,OUTPUT);
   Serial.begin(115200);
-  while (!radio.begin()) {
-    Serial.println(F("radio hardware is not responding!!"));
-  }
-  
-  radio.setPALevel(RF24_PA_LOW);
-   
-  radio.openReadingPipe(1, receive_address); 
-  radio.openWritingPipe(send_address);
-  radio.startListening();  // put radio in TX mode
-   
-  radio.maskIRQ(1,1,0);
-  pinMode(2,INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(2), recieveData, FALLING); // ENSURE INTERRUPT IS WORKING
-   
+  setup_WIFI();
+  setup_motor();
 }
 
 void loop() {
-//  if (flag){
-//  run_motor(1,100);
-//  delay(1000);
-//  stop_motor();
-//  flag = false;
-//  }
-digitalWrite(disp_led,LOW);
-  if (package.openSesimy){
-   // noInterrupts();
-   package.openSesimy = false;
+
+  if (pod.openSessimy){
     openPod();
     closePod();
-   // interrupts();
   }else{
     stop_motor();
   }
 }
 
 void openPod(){
-    run_motor(1,255);
+    run_motor(-1,255);
     delay(open_close_delay);
     stop_motor();
 }
 
 void closePod(){
-    run_motor(-1,255);
+    run_motor(1,255);
     delay(open_close_delay);
-    package.ready2go = true;
+    pod.ready2go = true;
+    pod.openSessimy = false;
     stop_motor();
     transmitData();
 }
 
-
-void recieveData(){
-    uint8_t pipe;
-    if (radio.available(&pipe)) {             // is there a payload? get the pipe number that recieved it
-      radio.read(&package, sizeof(msg));            // fetch payload from FIFO    
-      radio.stopListening();      
-  digitalWrite(disp_led,HIGH);
-  }
-  
-   // radio.flush_rx();
-  
-
-//  flag = true;
-
+void all_combinations(){
+  Serial.println(10);
+  run_motor(1,0);
+  delay(6000);
+  Serial.println("-10");
+  run_motor(-1,0);
+  delay(6000);
+  Serial.println("1255");
+  run_motor(1,255);
+  delay(6000);
+  Serial.println("-1255");
+  run_motor(-1,255);
+  delay(6000);
 }
 
-void transmitData(){
-    radio.stopListening();  // put radio in TX mode
-    bool report = radio.write(&package, sizeof(package));      // transmit & save the report
+
+void debug_hbridge(){
+  
+  //Serial.print("DIR: ");
+  //Serial.println(dir);
+  //Serial.println(pwm);
     
-    if (report) {
-      Serial.print(F("Transmission successful! "));          // payload was delivered
-    } else {
-      Serial.println(F("Transmission failed or timed out")); // payload was not delivered
+   
+    if(Serial.available()>0){
+    if(dir = 1){
+      dir = -1;
+    }else if (dir = -1){
+      dir = 1;
     }
-    radio.startListening();
-}
+    sp=Serial.parseInt();
+    run_motor(1, sp);
 
-
-void flashlight(int x){
-      digitalWrite(x, HIGH);
-      delay (200);
-      digitalWrite(x, LOW);
-      delay(200);
-      digitalWrite(x, HIGH);
-      delay (200);
-      digitalWrite(x, LOW);
-      delay(200);
-
+    Serial.print("data: ");
+    Serial.println(sp);
+   
+  
+  }
 }

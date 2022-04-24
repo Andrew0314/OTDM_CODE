@@ -4,31 +4,31 @@ void setup_input(){
   pinMode(reverse_pin, INPUT_PULLUP);
 }
 
-// MODIFIED MAP DUE TO BUILTIN MAP ONLY WORKING FOR INT
-double double_map(double x, double in_min, double in_max, double out_min, double out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
+//// MODIFIED MAP DUE TO BUILTIN MAP ONLY WORKING FOR INT
+//double double_map(double x, double in_min, double in_max, double out_min, double out_max)
+//{
+//  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+//}
 
 // Get potentiometer speed value
 void get_speed_value(){
   
   // NO POT INPUT IF POD IS IN SLOWDOWN
   if (in_slowdown){
-    speed_setpoint = slowdown_speed;
+    pwm = slowdown_pwm;
     return;
   }
 
   if (!motor_running){
-    speed_setpoint = 0.0;
+    pwm = 0;
     return;
   }
   int pot_value = analogRead(pot_pin);
-  speed_setpoint = double_map(pot_value, 0.0,1023.0,0.0,max_speed); // Map input to valid speed in ft/s
+  pwm = map(pot_value, 0,4095,0,255); // Map input to valid speed in ft/s
 
   // HANDLE LED
-  int R = map(pot_value,0,1023,255,0);
-  int G = map(pot_value, 0,1023, 0, 255);
+  int R = map(pot_value,0,4095,255,0);
+  int G = map(pot_value, 0,4095, 0, 255);
   RGB_LED(R,G,0);
 }
 
@@ -37,7 +37,10 @@ void get_speed_value(){
 void get_direction(){
   int forward_switch = digitalRead(forward_pin);
   int reverse_switch = digitalRead(reverse_pin);
-
+  Serial.print("FORWARD STATE: ");
+  Serial.println(forward_switch);
+  Serial.print("REVERSE STATE: ");
+  Serial.println(reverse_switch);
   if (forward_switch && reverse_switch){  // Don't run motor
     dir = 0;
   }
