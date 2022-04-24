@@ -17,7 +17,7 @@ struct msg{
 msg pod = {1,0,1};
 
 
-int open_close_delay = 1000;
+int open_close_delay = 10000;
 
 void setup() {
   Serial.begin(115200);

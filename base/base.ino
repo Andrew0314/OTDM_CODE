@@ -160,9 +160,8 @@ void loop() {
     handle_pod_location();          // Nested if statement to see where pods is and when to stop/slowdown
     if (run_with_pods){
       // IF PODS ARE CLOSED AND READY RUN MOTOR AT DIRECTION AND PWM
-      if (pod1.ready2go){// && pod2.ready2go){
-        
-        //speed_setpoint = slowdown_speed;
+      if (pod1.ready2go && pod2.ready2go){
+       
         run_motor(dir,pwm);    
       }else{
         stop_motor();

@@ -16,7 +16,7 @@ struct msg{
 // INDIVIDUAL POD MESSAGE
 msg pod = {2,0,1};
 
-int open_close_delay = 1000;
+int open_close_delay = 10000;
 
 
 void setup() {
