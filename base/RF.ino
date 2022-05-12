@@ -47,6 +47,8 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status_sent) {
   Serial.print(macStr);
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status_sent == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+  digitalWrite(receive_led_blue,LOW);
+  digitalWrite(send_led_red,HIGH);
 }
 
 // Callback when data is received
@@ -69,6 +71,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
     pod2.ready2go = incomingMsg.ready2go;
     Serial.println("Recieved pod 2 message");
   }
+  digitalWrite(receive_led_blue,HIGH);
+  digitalWrite(send_led_red,LOW);
 }
 
 void transmitData(int pod_number){

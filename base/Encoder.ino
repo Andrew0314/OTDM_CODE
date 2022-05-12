@@ -12,24 +12,19 @@ int encoder_ticks = 0;
 //bool reverse_flag = false;
 
 // VALUES FOR DISTANCE TRAVELED
-float feet_per_transit = 25;
+
 float ticks_per_rev = 1200; // ticks/rev
 float distance_per_rev = 13 * 3.1415 / 12; // ft/rev
 float rev_per_transit = feet_per_transit / distance_per_rev; // One way travel
 int ticks_per_transit = ticks_per_rev * rev_per_transit;
-int ticks_per_slowdown_tol = ticks_per_rev * (slowdown_tolerance / distance_per_rev);
 int ticks_per_stop_tol = ticks_per_rev * (stop_tolerance / distance_per_rev);
 float ft_per_tick = distance_per_rev / ticks_per_rev;
 
 
 
-// TICKS WHERE SLOWDOWN AND STOP SHOULD BEGIN
-int start_slowdown1 = ticks_per_transit - ticks_per_slowdown_tol;
-int stop_slowdown1 = ticks_per_transit + ticks_per_slowdown_tol;
-int start_slowdown2 = (2*ticks_per_transit) - ticks_per_slowdown_tol;
-int stop_slowdown2 = (2*ticks_per_transit) + ticks_per_slowdown_tol;
-int stop1_ticks = ticks_per_transit - ticks_per_stop_tol;
-int stop2_ticks = (2 * ticks_per_transit) - ticks_per_stop_tol;
+int pre_stop_slowdown_ticks = pre_stop_slowdown / ft_per_tick;
+int post_stop_slowdown_ticks = post_stop_slowdown / ft_per_tick;
+
 
 // VARIABLES FOR CURRENT TRAVEL SPEED
 unsigned long prev_time = micros();
@@ -45,10 +40,6 @@ void setup_encoder(){
   ESP32Encoder::useInternalWeakPullResistors=UP;
   encoder.attachHalfQuad(encoderA_pin, encoderB_pin);   
   encoder.setCount(0);
-//  pinMode(encoderA_pin,INPUT_PULLUP);
-//  pinMode(encoderB_pin,INPUT_PULLUP);
-//  attachInterrupt(digitalPinToInterrupt(encoderA_pin), encoderA, RISING);
-//  attachInterrupt(digitalPinToInterrupt(encoderB_pin), encoderB, RISING);
 }
 
 //void calculate_motor_speed(){
@@ -98,39 +89,33 @@ void setup_encoder(){
 void slowdown_motor(){
   in_slowdown = true;
   motor_running = true;
-  
-//  if (run_with_incremental_slowdown){
-//    double slowdown_increment = (speed_setpoint - slowdown_speed ) / slowdown_steps;
-//    for (int i = 0; i < slowdown_steps; i++){
-//      speed_setpoint -= slowdown_increment;
-//      delay(slowdown_delay);
-//    }
-//  }else{
-      pwm = slowdown_pwm;
-//      assign_motor_pwm();
-//  }
+  pwm = slowdown_pwm;
 }
+
+
+// slow phases
+// 0 -> post_stop_slowdown ticks
+// pre_stop_slowdown -> ticks_per_transits
 
 void handle_pod_location(){
   // IF AT CORRECT LOCATION TRANSMIT SIGNAL TO OPEN
   encoder_ticks = encoder.getCount();
+  Serial.print("Encoder Ticks: ");
+  Serial.println(encoder_ticks);
   if (!run_with_encoder){
     in_slowdown = false;
     return;
   }
 
-  if (encoder_ticks <= ticks_per_slowdown_tol){
+  if (encoder_ticks <= post_stop_slowdown_ticks){
     slowdown_motor();
- 
   }
-  else if (encoder_ticks >= start_slowdown1 and encoder_ticks < ticks_per_transit) // ENTERING SLOWDOWN
+  else if (encoder_ticks >= pre_stop_slowdown_ticks and encoder_ticks < ticks_per_transit) // ENTERING SLOWDOWN
   {
     slowdown_motor();
- 
   }
   else if (encoder_ticks >= ticks_per_transit) // LOADING/UNLOADING // NEEDS THE LOAD_COMPLETE BECAUSE IT WOULD TRIGGER TWICE
-  {
-    
+  {   
     stop_motor();
     in_slowdown = false;    // DISABLEs SPEED CONTROL
     if (!run_with_pods){
@@ -144,57 +129,12 @@ void handle_pod_location(){
     }
    }
     get_speed_value();
-//    assign_motor_pwm();   // STARTS MOTOR AGAIN
     encoder_ticks = 0;
     encoder.setCount(0);
   }
   else{
     in_slowdown = false;
     get_speed_value();
-//    assign_motor_pwm();
   }
 
 }
-
-
-
-//void encoderA(){
-//  // INCREMENT CW ENCODER COUNTS
-//
-//  if (digitalRead(encoderB_pin)){
-//    encoder_direction = true;
-//    encoder_ticks ++;
-//    //Serial.println(encoder_ticks);
-//    ellapsed_encoder_ticks++;
-//    reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-//  }else{
-//    reverse_ticks++;
-//    encoder_direction = false;
-//    if (reverse_ticks == max_reverse_ticks){
-//      reverse_flag = true;
-//    }
-//  }
-//
-//}
-
-//void encoderB(){
-//
-//      // INCREMENT CW ENCODER COUNTS
-//  //calculate_motor_speed();
-//
-//  if (!digitalRead(encoderA_pin)){
-//    encoder_direction = true;
-//    encoder_ticks ++;
-//    reverse_ticks = 0;  // Reset reverse ticks because we have moved forward
-//
-//
-//  }else{
-//    reverse_ticks++;
-//    encoder_direction = false;
-//    if (reverse_ticks == max_reverse_ticks){
-//      reverse_flag = true;
-//    }
-//  }
-//
-//
-//}

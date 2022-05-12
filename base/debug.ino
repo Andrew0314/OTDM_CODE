@@ -121,49 +121,6 @@ void print_pod_status(int pod){
       
 }
 
-//void print_msg(msg pod){
-//  Serial.print("Pod: ");
-//  Serial.print(pod.podNum);
-//  Serial.print("\tReady: ");
-//  Serial.print(pod.ready2go);
-//  Serial.print("\tOpen: ");
-//  Serial.println(pod.openSessimy);    
-//}
-
-void rgb(){
-  RGB_LED(0,0,255);
-  delay(1000);
-  RGB_LED(0,255,0);
-  delay(1000);
-  RGB_LED(255,0,0);
-  delay(1000);
-  RGB_LED(0,0,0);
-  
-  
-}
-
-void all_lights(){
-
-  digitalWrite(receive_led_blue, HIGH);
-  digitalWrite(send_led_red, HIGH);
-  digitalWrite(running_led_green, HIGH);
-  digitalWrite(receive_led_blue, HIGH);
-//  analogWrite(R_pin,255);
-//  analogWrite(G_pin,255);
-//  analogWrite(B_pin,255);
-
-}
-
-void all_lights_off(){
-
-  digitalWrite(receive_led_blue, LOW);
-  digitalWrite(send_led_red, LOW);
-  digitalWrite(running_led_green, LOW);
-//  analogWrite(R_pin,0);
-//  analogWrite(G_pin,0);
-//  analogWrite(B_pin,0);
-
-}
 
 void debug_hbridge(bool with_pot){
   Serial.print("DIR: ");

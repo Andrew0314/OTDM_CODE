@@ -16,6 +16,8 @@ void get_speed_value(){
   // NO POT INPUT IF POD IS IN SLOWDOWN
   if (in_slowdown){
     pwm = slowdown_pwm;
+    
+    RGB_LED(map(pwm,0,255,255,0),pwm,0);
     return;
   }
 
@@ -37,17 +39,16 @@ void get_speed_value(){
 void get_direction(){
   int forward_switch = digitalRead(forward_pin);
   int reverse_switch = digitalRead(reverse_pin);
-  Serial.print("FORWARD STATE: ");
-  Serial.println(forward_switch);
-  Serial.print("REVERSE STATE: ");
-  Serial.println(reverse_switch);
   if (forward_switch && reverse_switch){  // Don't run motor
     dir = 0;
+    digitalWrite(running_led_green,LOW);
   }
   else if (forward_switch && !reverse_switch){ // Run Forward
     dir = 1;
+    digitalWrite(running_led_green,HIGH);
   }
   else if (!forward_switch && reverse_switch){ // Run Reverse
     dir = -1;
+    digitalWrite(running_led_green,LOW);
   }
 }
